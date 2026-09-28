@@ -1,25 +1,12 @@
 # qinglong-checkin
 
-通用青龙签到脚本成品仓库，由 `mortal-shaco` 维护。当前收录 CFMOTO 春风动力每日积分任务，
-代码采用 [MIT](LICENSE) 许可证，可直接通过青龙订阅使用。
+通用签到类青龙脚本发布仓库。这里只包含通过来源、许可证、静态检查、真实沙箱验证和人工副作用验收的版本。
 
 ## 青龙面板安装
 
-推荐使用订阅安装：进入青龙面板 → 订阅管理 → 新建订阅，按下方“订阅配置”填写并运行一次订阅。
-订阅完成后，到定时任务中确认已生成“春风动力签到”；若没有自动生成，可手工新建：
-
-```text
-名称：春风动力签到
-命令：task scripts/cfmoto_checkin.py
-定时：17 8 * * *
-```
-
-单脚本安装时，进入青龙面板 → 脚本管理，建立 `scripts` 目录并上传
-`scripts/cfmoto_checkin.py`，然后按上面的名称、命令和 Cron 新建定时任务。
+进入青龙面板 → 订阅管理 → 新建订阅，按下方“订阅配置”填写，开启“自动添加任务”和“自动删除任务”，再手工运行一次订阅。青龙会根据每个脚本顶部的 `name:` / `cron:` 元数据自动创建业务任务和“本仓库依赖安装”任务；首次订阅后先运行一次依赖安装任务。也可以在脚本管理中按原路径上传单个脚本，再按“定时任务”表创建任务。
 
 ## 订阅配置
-
-在“订阅管理 → 新建订阅”中填写：
 
 ```text
 名称：mortal-shaco 通用签到
@@ -28,132 +15,110 @@
 分支：main
 定时类型：crontab
 定时规则：17 4 * * *
-白名单：^scripts/cfmoto_checkin\.py$
+白名单：^(scripts/install_dependencies\.sh|scripts/cfmoto_checkin\.py)$
 黑名单：(^|/)(tests?|docs?|validation)/|(^|/)(README|CHANGELOG|LICENSE)(\.|$)
 ```
 
-不同青龙版本可能把白名单/黑名单显示为“包含文件”和“排除文件”，两者均使用正则表达式。
-白名单应保留准确脚本路径；不要把 `README.md` 或验证记录识别为任务。
-
 ## 建议订阅周期
 
-建议每天北京时间 04:17 同步一次：`17 4 * * *`。这是拉取脚本更新的周期，不是业务任务执行时间。
-CFMOTO 任务建议每天北京时间 08:17 执行：`17 8 * * *`。上游接口或参数发生变化时，可手工立即运行订阅。
+建议每天北京时间 04:17 同步：`17 4 * * *`。订阅更新与业务任务执行是两套 Cron；业务时间见下方任务表。
 
 ## 黑白名单设置
 
-当前仓库只有一个可执行脚本，推荐使用严格白名单：
-
-```regex
-^scripts/cfmoto_checkin\.py$
-```
-
-推荐黑名单：
-
-```regex
-(^|/)(tests?|docs?|validation)/|(^|/)(README|CHANGELOG|LICENSE)(\.|$)
-```
-
-白名单留空可能使未来新增的辅助文件也被扫描为任务。若以后需要启用更多脚本，应逐条扩展白名单，
-不要改成匹配仓库中所有 `.py` 文件。
+白名单应精确使用订阅配置中的脚本路径表达式，并保留 `scripts/install_dependencies.sh`。黑名单排除文档、测试和脱敏验证材料，避免青龙把非任务文件识别为脚本。若面板显示“文件后缀”，填写 `js py sh`。
 
 ## 环境变量与参数
 
-进入青龙面板 → 环境变量 → 新建变量。敏感值不得写入脚本、订阅地址或日志。
+在青龙面板 → 环境变量中逐项新增。敏感值不得写入脚本、订阅地址或日志。
 
-### `CFMOTO_COOKIE`
+| 脚本 | 变量 | 必填 | 敏感 | 格式与默认值 |
+| --- | --- | --- | --- | --- |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_COOKIE` | 是 | 是 | 格式：ticket=<value> 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTIVITY_COUNT` | 否 | 否 | 默认 `3`；范围 `0-3`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTION_DELAY` | 否 | 否 | 默认 `2`；范围 `0-30`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_POST_CONTENTS` | 否 | 否 | 格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_RANDOM_DELAY_MAX` | 否 | 否 | 默认 `0`；范围 `0-3600`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_NOTIFY` | 否 | 否 | 默认 `1`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_USER_AGENT` | 否 | 否 | 多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_DRY_RUN` | 否 | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
 
-- 必填、敏感。
-- 值可以是裸 `ticket`，也可以是包含 `ticket=...` 的完整 Cookie。
-- 多账号使用换行分隔，每行一个账号。
-- 所有发布脚本统一采用该规则，不使用 `&`、`@` 等自定义账号分隔符。
-- 从本人已登录的 CFMOTO App 请求中获取；Cookie 失效后需要重新获取。
+多账号统一规则：每行一个账号；需要多个凭据变量时按相同非空行号配对，行数必须一致。
 
-### `CFMOTO_ACTIVITY_COUNT`
-
-- 可选，默认 `3`，允许 `0–3`。
-- 控制发帖、评论、点赞和分享积分任务的轮数。
-- 脚本硬限制最大为 3；设为 4 或更大将拒绝运行。
-
-### `CFMOTO_ACTION_DELAY`
-
-- 可选，默认 `2` 秒，允许 `0–30`。
-- 控制积分动作之间的等待时间，建议保留默认值。
-
-### `CFMOTO_POST_CONTENTS`
-
-- 可选，非敏感。
-- 自定义发帖和评论文案，使用换行或 `|` 分隔多条内容。
-- 未配置时使用脚本内置文案，内容不会请求第三方服务。
-
-### `CFMOTO_RANDOM_DELAY_MAX`
-
-- 可选，默认 `0`，允许 `0–3600` 秒。
-- 设置后，任务开始前会在此范围内随机等待；`0` 表示不等待。
-
-### `CFMOTO_NOTIFY`
-
-- 可选，默认启用。
-- 设置为 `0`、`false`、`no` 或 `off` 可关闭 `notify.py` 通知。
-
-### `CFMOTO_USER_AGENT`
-
-- 可选，高级参数。
-- 覆盖默认 App User-Agent。接口正常时不建议修改。
-
-### `CFMOTO_DRY_RUN`
-
-- 可选，默认关闭。
-- 设置为 `1` 时只检查配置并展示计划请求数，不联网、不签到，也不执行互动任务。
+- `scripts/cfmoto_checkin.py`：CFMOTO_COOKIE 每行一个账号。
 
 ## 参数获取方法
 
 ### `CFMOTO_COOKIE`
 
+- 所属脚本：`scripts/cfmoto_checkin.py`
 - 获取或设置：使用本人测试账号在 CFMOTO App 执行一次相关请求，从本人控制的本地网络调试记录中复制 Cookie 请求头里的 ticket；如 App 阻止调试，不要绕过安全机制。
 - 填写格式：`ticket=<value> 或裸 ticket；多账号每行一个`
-- 安全性：这是敏感会话凭据，不得写入脚本、提交、截图、聊天或公开日志。
+- 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-### 其余参数
+### `CFMOTO_ACTIVITY_COUNT`
 
-- `CFMOTO_ACTIVITY_COUNT`：无需获取；手工设置互动任务轮数，设为 0 可只签到。
-- `CFMOTO_ACTION_DELAY`：无需获取；手工设置每个积分动作之间的等待秒数。
-- `CFMOTO_POST_CONTENTS`：无需获取；按需自行编写公开发帖和评论文案。格式为多条内容用换行或 `|` 分隔。
-- `CFMOTO_RANDOM_DELAY_MAX`：无需获取；手工设置任务启动前的最大随机等待秒数。
-- `CFMOTO_NOTIFY`：无需获取；设为 0 可关闭 notify.py 通知。
-- `CFMOTO_USER_AGENT`：通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。
-- `CFMOTO_DRY_RUN`：无需获取；仅预演时手工设为 1。
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置互动任务轮数，设为 0 可只签到。
 
-获取凭据后，在青龙面板的“环境变量”中新建同名变量，不要把值写到订阅 URL 或定时任务命令中。怀疑泄露时应立即在 App 中退出登录并重新登录。
+### `CFMOTO_ACTION_DELAY`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置每个积分动作之间的等待秒数。
+
+### `CFMOTO_POST_CONTENTS`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；按需自行编写公开发帖和评论文案。
+- 填写格式：`多条内容用换行或 | 分隔`
+
+### `CFMOTO_RANDOM_DELAY_MAX`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置任务启动前的最大随机等待秒数。
+
+### `CFMOTO_NOTIFY`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；设为 0 可关闭 notify.py 通知。
+
+### `CFMOTO_USER_AGENT`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。
+
+### `CFMOTO_DRY_RUN`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；仅预演时手工设为 1。
+
 
 ## 定时任务
 
-| 任务 | 命令 | 建议 Cron | 说明 |
-| --- | --- | --- | --- |
-| 春风动力签到 | `task scripts/cfmoto_checkin.py` | `17 8 * * *` | 不建议并发；每个账号约运行 30 秒 |
+| 脚本 | 青龙命令 | 建议 Cron |
+| --- | --- | --- |
+| `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
+| `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
 
-脚本的成功退出码为 `0`，配置错误为 `2`，网络或业务任务失败为 `1`。通知失败不会改变业务结果。
+依赖安装任务会读取本仓库的 `requirements.txt`、`package-lock.json` 或 `package.json`；没有额外依赖时安全退出，不会执行远程安装脚本。
 
 ## 验证与兼容性
 
-- 最近验证：2026-09-28
-- 脚本 SHA-256：`4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809`
-- 验证模式：本地隔离验证器 `live`
-- Python：3.14；脚本最低要求 Python 3.10
-- 业务结果：成功，退出码 `0`
-- 实测：签到今日已完成；发帖、评论、点赞各成功 3 次；分享任务今日已完成
-- 脱敏证据：`validation/cfmoto/`
+- `scripts/cfmoto_checkin.py`：SHA-256 `4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809`；live 业务成功证据位于 `projects/checkin/validation/cfmoto`。
 
-每次修改脚本后都必须重新验证；上面的结果只对应所列 SHA-256。
+发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 
 ## 副作用与风险
 
-脚本会使用账号真实执行签到，并默认发布 3 个公开帖子、评论 3 次、点赞 3 次和调用分享积分任务 3 次。
-这些行为会出现在 CFMOTO 社区，可能触发平台频率限制或账号风控。可用 `CFMOTO_ACTIVITY_COUNT=0`
-仅执行签到，或设置为 `1–2` 降低互动次数。停止使用时，请禁用青龙定时任务、删除订阅并删除
-`CFMOTO_COOKIE` 环境变量；如怀疑 Cookie 泄露，应立即在 App 中退出登录并重新登录。
+- `scripts/cfmoto_checkin.py`：改变账号的当日签到和积分状态；最多发布三个公开帖子并留下可见内容；最多产生三次公开评论、三次点赞和三次分享任务记录。
+
+## 脚本功能
+
+- `scripts/cfmoto_checkin.py`：执行每日签到；按配置发布帖子、评论、点赞并完成分享积分任务。
+
+使用测试账号先行验证。停止使用时应禁用任务、删除订阅和敏感环境变量；怀疑凭据泄漏时立即在对应平台撤销会话。
 
 ## 许可证与来源
 
-本脚本由 `mortal-shaco` 编写并维护，使用 MIT License 发布。接口属于对应服务提供方，
-本项目与 CFMOTO 官方无隶属或授权关系，使用者应遵守平台规则并自行承担账号风险。
+仓库发布许可证：`MIT`。每个脚本仍保留准确来源：
+
+- `scripts/cfmoto_checkin.py`：作者自有来源 `shaco_autowork/cf_sign.py`。
