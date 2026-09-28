@@ -22,14 +22,14 @@
       "cron": "17 8 * * *",
       "command": "task scripts/cfmoto_checkin.py",
       "environment": [
-        {"name": "CFMOTO_COOKIE", "required": true, "sensitive": true},
-        {"name": "CFMOTO_ACTIVITY_COUNT", "required": false, "sensitive": false, "default": "3", "range": "0-3"},
-        {"name": "CFMOTO_ACTION_DELAY", "required": false, "sensitive": false, "default": "2", "range": "0-30"},
-        {"name": "CFMOTO_POST_CONTENTS", "required": false, "sensitive": false},
-        {"name": "CFMOTO_RANDOM_DELAY_MAX", "required": false, "sensitive": false, "default": "0", "range": "0-3600"},
-        {"name": "CFMOTO_NOTIFY", "required": false, "sensitive": false, "default": "1"},
-        {"name": "CFMOTO_USER_AGENT", "required": false, "sensitive": false},
-        {"name": "CFMOTO_DRY_RUN", "required": false, "sensitive": false, "default": "0"}
+        {"name": "CFMOTO_COOKIE", "required": true, "sensitive": true, "format": "ticket=<value> 或裸 ticket；多账号每行一个", "howToGet": "使用本人测试账号在 CFMOTO App 执行一次相关请求，从本人控制的本地网络调试记录中复制 Cookie 请求头里的 ticket；如 App 阻止调试，不要绕过安全机制。"},
+        {"name": "CFMOTO_ACTIVITY_COUNT", "required": false, "sensitive": false, "default": "3", "range": "0-3", "howToGet": "无需获取；手工设置互动任务轮数，设为 0 可只签到。"},
+        {"name": "CFMOTO_ACTION_DELAY", "required": false, "sensitive": false, "default": "2", "range": "0-30", "howToGet": "无需获取；手工设置每个积分动作之间的等待秒数。"},
+        {"name": "CFMOTO_POST_CONTENTS", "required": false, "sensitive": false, "format": "多条内容用换行或 | 分隔", "howToGet": "无需获取；按需自行编写公开发帖和评论文案。"},
+        {"name": "CFMOTO_RANDOM_DELAY_MAX", "required": false, "sensitive": false, "default": "0", "range": "0-3600", "howToGet": "无需获取；手工设置任务启动前的最大随机等待秒数。"},
+        {"name": "CFMOTO_NOTIFY", "required": false, "sensitive": false, "default": "1", "howToGet": "无需获取；设为 0 可关闭 notify.py 通知。"},
+        {"name": "CFMOTO_USER_AGENT", "required": false, "sensitive": false, "howToGet": "通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。"},
+        {"name": "CFMOTO_DRY_RUN", "required": false, "sensitive": false, "default": "0", "howToGet": "无需获取；仅预演时手工设为 1。"}
       ],
       "dependencies": ["python>=3.10"],
       "sideEffects": [
