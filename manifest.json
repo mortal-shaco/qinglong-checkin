@@ -31,6 +31,7 @@
         {"name": "CFMOTO_USER_AGENT", "required": false, "sensitive": false, "howToGet": "通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。"},
         {"name": "CFMOTO_DRY_RUN", "required": false, "sensitive": false, "default": "0", "howToGet": "无需获取；仅预演时手工设为 1。"}
       ],
+      "multiAccount": {"supported": true, "separator": "newline", "rule": "CFMOTO_COOKIE 每行一个账号"},
       "dependencies": ["python>=3.10"],
       "sideEffects": [
         "每日签到",
