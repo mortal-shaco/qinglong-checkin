@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "0ba7bb41fd4c339c",
+  "candidateSha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
+  "testedAt": "2026-09-28T09:59:54.937428+00:00",
+  "finishedAt": "2026-09-28T10:00:23.748007+00:00",
+  "mode": "live",
+  "runner": "local-sandbox-validator",
+  "runtime": {"command": "python3.14"},
+  "accountType": "local-user-configured",
+  "exitCode": 0,
+  "timedOut": false,
+  "businessResult": "success",
+  "sideEffectsObserved": [
+    "春风动力账号执行每日签到",
+    "每个账号最多发布三个公开帖子",
+    "在新发布帖子下最多评论三次",
+    "对新发布帖子最多点赞三次",
+    "最多执行三次分享积分任务"
+  ],
+  "log": "redacted.log"
+}

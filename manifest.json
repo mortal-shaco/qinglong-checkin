@@ -3,6 +3,50 @@
   "project": "checkin",
   "displayName": "通用签到",
   "repositoryName": "qinglong-checkin",
-  "releaseLicense": null,
-  "scripts": []
+  "releaseLicense": "MIT",
+  "scripts": [
+    {
+      "catalogId": "0ba7bb41fd4c339c",
+      "path": "scripts/cfmoto_checkin.py",
+      "sha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
+      "stage": "accepted",
+      "license": "MIT",
+      "licenseGate": "allowed-permissive",
+      "source": {
+        "kind": "author-owned",
+        "owner": "mortal-shaco",
+        "originalPath": "shaco_autowork/cf_sign.py"
+      },
+      "cron": "17 8 * * *",
+      "command": "task scripts/cfmoto_checkin.py",
+      "environment": [
+        {"name": "CFMOTO_COOKIE", "required": true, "sensitive": true},
+        {"name": "CFMOTO_ACTIVITY_COUNT", "required": false, "sensitive": false, "default": "3", "range": "0-3"},
+        {"name": "CFMOTO_ACTION_DELAY", "required": false, "sensitive": false, "default": "2", "range": "0-30"},
+        {"name": "CFMOTO_POST_CONTENTS", "required": false, "sensitive": false},
+        {"name": "CFMOTO_RANDOM_DELAY_MAX", "required": false, "sensitive": false, "default": "0", "range": "0-3600"},
+        {"name": "CFMOTO_NOTIFY", "required": false, "sensitive": false, "default": "1"},
+        {"name": "CFMOTO_USER_AGENT", "required": false, "sensitive": false},
+        {"name": "CFMOTO_DRY_RUN", "required": false, "sensitive": false, "default": "0"}
+      ],
+      "dependencies": ["python>=3.10"],
+      "sideEffects": [
+        "每日签到",
+        "每个账号最多发布三个公开帖子",
+        "每个账号最多评论三次",
+        "每个账号最多点赞三次",
+        "每个账号最多执行三次分享积分任务"
+      ],
+      "review": {
+        "staticPassed": true,
+        "sandboxPassed": true,
+        "humanAccepted": true,
+        "sideEffectsReviewed": true
+      },
+      "validation": {
+        "status": "passed",
+        "evidence": "projects/checkin/validation/cfmoto"
+      }
+    }
+  ]
 }
