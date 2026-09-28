@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "project": "checkin",
+  "displayName": "通用签到",
+  "repositoryName": "qinglong-checkin",
+  "releaseLicense": null,
+  "scripts": []
+}
