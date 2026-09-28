@@ -3,13 +3,15 @@
   "project": "checkin",
   "displayName": "通用签到",
   "repositoryName": "qinglong-checkin",
+  "repository": "https://github.com/mortal-shaco/qinglong-checkin",
+  "version": "1.0.0",
   "releaseLicense": "MIT",
   "scripts": [
     {
       "catalogId": "0ba7bb41fd4c339c",
       "path": "scripts/cfmoto_checkin.py",
       "sha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
-      "stage": "accepted",
+      "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
       "source": {
