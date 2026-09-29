@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "project": "checkin",
   "displayName": "通用签到",
-  "repositoryName": "qinglong-checkin",
-  "repository": "https://github.com/mortal-shaco/qinglong-checkin",
+  "repositoryName": "shaco-checkin",
+  "repository": "https://github.com/mortal-shaco/shaco-checkin",
   "version": "1.0.0",
   "releaseLicense": "GPL-3.0-only",
   "scripts": [
@@ -11,7 +11,7 @@
       "catalogId": "0ba7bb41fd4c339c",
       "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
-      "sha256": "a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4",
+      "sha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -51,7 +51,7 @@
           "required": false,
           "sensitive": false,
           "format": "多条内容用换行或 | 分隔",
-          "howToGet": "无需获取；按需自行编写公开发帖和评论文案。"
+          "howToGet": "无需获取；仅在随机文案接口不可用时，作为自定义本地兜底文案。"
         },
         {
           "name": "CFMOTO_RANDOM_DELAY_MAX",
@@ -92,12 +92,14 @@
       ],
       "features": [
         "执行每日签到",
+        "发帖和评论优先使用接口随机文本，返回出处时拼接作者与作品信息，接口异常时使用本地文案兜底",
         "按配置发布帖子、评论、点赞并完成分享积分任务"
       ],
       "sideEffects": [
         "改变账号的当日签到和积分状态",
         "最多发布三个公开帖子并留下可见内容",
-        "最多产生三次公开评论、三次点赞和三次分享任务记录"
+        "最多产生三次公开评论、三次点赞和三次分享任务记录",
+        "发帖和评论前访问第三方一言接口获取公开随机文本，不发送春风动力账号凭据"
       ],
       "review": {
         "staticPassed": true,
@@ -107,14 +109,8 @@
       },
       "validation": {
         "status": "passed",
-        "evidence": "projects/checkin/validation/cfmoto",
-        "candidateSha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809"
-      },
-      "packaging": {
-        "type": "qinglong-discovery-comments",
-        "validatedSha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
-        "releaseSha256": "a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4",
-        "statement": "Only non-executable name/cron comments were added during release staging."
+        "evidence": "projects/checkin/validation/0ba7bb41fd4c339c",
+        "candidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7"
       }
     },
     {
@@ -201,7 +197,7 @@
       "catalogId": "e608052390d250da",
       "displayName": "百度贴吧签到",
       "path": "scripts/tieba_checkin.py",
-      "sha256": "1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0",
+      "sha256": "77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5",
       "stage": "released",
       "license": "GPL-3.0-only",
       "licenseGate": "allowed-copyleft",
@@ -215,7 +211,7 @@
       "command": "python3 scripts/tieba_checkin.py",
       "environment": [
         {
-          "name": "TIE_BA_COOKIE",
+          "name": "TIEBA_COOKIE",
           "required": true,
           "sensitive": true,
           "format": "建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个",
@@ -247,7 +243,7 @@
       "multiAccount": {
         "supported": true,
         "separator": "newline",
-        "rule": "TIE_BA_COOKIE 每行一个账号，不使用 & 拼接"
+        "rule": "TIEBA_COOKIE 每行一个账号，不使用 & 拼接；旧名称 TIE_BA_COOKIE 暂时兼容"
       },
       "dependencies": [
         "python>=3.10 standard library"
@@ -269,12 +265,12 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/e608052390d250da",
-        "candidateSha256": "7bd631d96cd54dc946eb361893dcfcc82c32992d3d448d54af8865590cbdcb08"
+        "candidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7"
       },
       "packaging": {
         "type": "qinglong-discovery-comments",
-        "validatedSha256": "7bd631d96cd54dc946eb361893dcfcc82c32992d3d448d54af8865590cbdcb08",
-        "releaseSha256": "1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0",
+        "validatedSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
+        "releaseSha256": "77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5",
         "statement": "Only non-executable name/cron comments were added during release staging."
       }
     }

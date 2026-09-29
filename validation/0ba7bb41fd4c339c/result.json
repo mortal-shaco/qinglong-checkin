@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "0ba7bb41fd4c339c",
+  "candidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
+  "source": {
+    "kind": "author-owned",
+    "owner": "mortal-shaco",
+    "origin": "qinglong-local-export",
+    "repository": null,
+    "branch": null,
+    "commit": null,
+    "path": "shaco_autowork/cf_sign.py",
+    "sha256": "55ec175c0a9a8e84618054998aeb2cf96d22465d9a7a541d9a13b456a7c1665f",
+    "exportedAt": "2026-09-28T06:11:42.973Z"
+  },
+  "testedAt": "2026-09-29T03:48:44.184890+00:00",
+  "finishedAt": "2026-09-29T03:49:16.548934+00:00",
+  "mode": "live",
+  "runner": "local-sandbox-validator",
+  "runtime": {
+    "command": "python3.14"
+  },
+  "accountType": "local-user-configured",
+  "exitCode": 0,
+  "timedOut": false,
+  "businessResult": "success",
+  "sideEffectsObserved": [
+    "改变春风动力账号的当日签到和积分状态",
+    "最多发布三个公开帖子并留下可见内容",
+    "最多产生三次公开评论、三次点赞和三次分享任务记录"
+  ],
+  "log": "redacted.log",
+  "humanDecision": {
+    "status": "passed",
+    "decidedBy": "mortal-shaco",
+    "decidedAt": "2026-09-29T03:49:36.484158+00:00"
+  }
+}

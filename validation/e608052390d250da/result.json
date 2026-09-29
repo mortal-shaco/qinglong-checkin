@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogId": "e608052390d250da",
-  "candidateSha256": "7bd631d96cd54dc946eb361893dcfcc82c32992d3d448d54af8865590cbdcb08",
+  "candidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
   "source": {
     "repository": "sudojia/AutoTaskScript",
     "branch": "script",
@@ -9,8 +9,8 @@
     "path": "src/web/sudojia_tieba.js",
     "sha256": "26fa12b3fb1cacad85e936bd8b7fe02d75c53289540a9ca04f6c058abba1bbc3"
   },
-  "testedAt": "2026-09-29T01:13:32.396584+00:00",
-  "finishedAt": "2026-09-29T01:13:32.700741+00:00",
+  "testedAt": "2026-09-29T03:40:39.039471+00:00",
+  "finishedAt": "2026-09-29T03:40:39.276772+00:00",
   "mode": "live",
   "runner": "local-sandbox-validator",
   "runtime": {
@@ -23,5 +23,10 @@
   "sideEffectsObserved": [
     "向百度贴吧提交签到请求并改变对应贴吧的当日签到状态"
   ],
-  "log": "redacted.log"
+  "log": "redacted.log",
+  "humanDecision": {
+    "status": "passed",
+    "decidedBy": "mortal-shaco",
+    "decidedAt": "2026-09-29T03:40:43.415583+00:00"
+  }
 }

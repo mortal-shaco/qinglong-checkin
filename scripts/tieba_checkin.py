@@ -155,9 +155,9 @@ def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_sec
 
 
 def main() -> int:
-    accounts = parse_accounts(os.environ.get("TIE_BA_COOKIE"))
+    accounts = parse_accounts(os.environ.get("TIEBA_COOKIE") or os.environ.get("TIE_BA_COOKIE"))
     if not accounts:
-        print(f"[{NAME}] 缺少 TIE_BA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号使用换行分隔。", file=sys.stderr)
+        print(f"[{NAME}] 缺少 TIEBA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号使用换行分隔。", file=sys.stderr)
         return 2
     dry_run = enabled("TIEBA_DRY_RUN")
     verbose = enabled("TIEBA_VERBOSE")

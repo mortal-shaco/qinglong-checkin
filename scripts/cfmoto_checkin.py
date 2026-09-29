@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# name: 春风动力签到
 """CFMOTO daily points tasks for Qinglong.
 
 cron: 17 8 * * *
@@ -35,6 +34,7 @@ SIGN_URL = "https://c.cfmoto.com/cfmotoservermall/app/integral/task/complete/v1"
 PUBLISH_URL = "https://c.cfmoto.com/jv/bbs/post/create-v5/"
 COMMENT_URL = "https://c.cfmoto.com/jv/bbs/article/comment-v1/"
 LIKE_URL = "https://c.cfmoto.com/jv/bbs/post/thumbs_up/{post_id}"
+TEXT_API_URL = "https://v1.hitokoto.cn/?encode=json"
 MAX_DAILY_ACTIVITIES = 3
 DEFAULT_USER_AGENT = (
     "MOBILE|iOS|15.4|KLICEN_APP|5.0.1|iPhone|iPhone|1170*2532|"
@@ -237,6 +237,59 @@ def post_contents() -> list[str]:
     return values or list(DEFAULT_CONTENTS)
 
 
+def fetch_random_text(timeout: float = 8.0) -> tuple[str | None, str | None]:
+    """Fetch one public sentence without sending the CFMOTO account credential."""
+    request = urllib.request.Request(
+        TEXT_API_URL,
+        method="GET",
+        headers={"Accept": "application/json", "User-Agent": "qinglong-cfmoto-checkin/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read(16_385)
+            if len(raw) > 16_384:
+                return None, "文案接口响应超过 16 KiB"
+            charset = response.headers.get_content_charset() or "utf-8"
+            payload = json.loads(raw.decode(charset, errors="strict"))
+    except urllib.error.HTTPError as error:
+        return None, f"HTTP {error.code}"
+    except urllib.error.URLError as error:
+        reason = getattr(error, "reason", None)
+        return None, "网络请求失败" + (f"（{type(reason).__name__}）" if reason else "")
+    except TimeoutError:
+        return None, "网络请求超时"
+    except (UnicodeError, json.JSONDecodeError):
+        return None, "接口未返回有效 JSON"
+
+    value = payload.get("hitokoto") if isinstance(payload, dict) else None
+    text = re.sub(r"\s+", " ", value).strip() if isinstance(value, str) else ""
+    if not text:
+        return None, "接口未返回有效文案"
+    source_value = payload.get("from") if isinstance(payload, dict) else None
+    author_value = payload.get("from_who") if isinstance(payload, dict) else None
+    source = re.sub(r"\s+", " ", source_value).strip() if isinstance(source_value, str) else ""
+    author = re.sub(r"\s+", " ", author_value).strip() if isinstance(author_value, str) else ""
+    if source and author:
+        text = f"{text} —— {author}《{source}》"
+    elif source:
+        text = f"{text} ——《{source}》"
+    elif author:
+        text = f"{text} —— {author}"
+    if len(text) > 280:
+        return None, "接口文案超过 280 字"
+    return text, None
+
+
+def activity_content(fallbacks: list[str], action: str, account_index: int) -> str:
+    remote, error = fetch_random_text()
+    if remote:
+        print(f"[账号 {account_index}] {action}使用接口随机文案。")
+        return remote
+    fallback = random.choice(fallbacks)
+    print(f"[账号 {account_index}] 文案接口不可用（{error or '未知错误'}），{action}使用本地兜底文案。")
+    return fallback
+
+
 def show(index: int, result: Result) -> None:
     icon = "✓" if result.ok else "✗"
     print(f"[账号 {index}] {icon} {result.message}")
@@ -250,7 +303,7 @@ def run_account(ticket: str, index: int, activity_count: int, action_delay: int)
     for round_index in range(activity_count):
         if action_delay:
             time.sleep(action_delay)
-        content = contents[round_index % len(contents)]
+        content = activity_content(contents, "发帖", index)
         publish_result, post_id = publish(ticket, content)
         results.append(publish_result)
         show(index, publish_result)
@@ -258,7 +311,7 @@ def run_account(ticket: str, index: int, activity_count: int, action_delay: int)
         if post_id:
             if action_delay:
                 time.sleep(action_delay)
-            comment_content = contents[(round_index + 1) % len(contents)]
+            comment_content = activity_content(contents, "评论", index)
             comment_result = comment(ticket, post_id, comment_content)
             results.append(comment_result)
             show(index, comment_result)

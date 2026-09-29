@@ -1,4 +1,4 @@
-# qinglong-checkin
+# shaco-checkin
 
 通用签到类青龙脚本发布仓库。这里只包含通过来源、许可证、静态检查、真实沙箱验证和人工副作用验收的版本。
 
@@ -11,7 +11,7 @@
 ```text
 名称：mortal-shaco 通用签到
 类型：公开仓库
-地址：https://github.com/mortal-shaco/qinglong-checkin.git
+地址：https://github.com/mortal-shaco/shaco-checkin.git
 分支：main
 定时类型：crontab
 定时规则：17 4 * * *
@@ -38,7 +38,7 @@
 | `scripts/cfmoto_checkin.py` | `CFMOTO_COOKIE` | 是 | 格式：ticket=<value> 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准 |
 | `scripts/smzdm_checkin.js` | `SMZDM_COOKIE` | 是 | 格式：完整 Cookie，必须包含 sess=<value>；多账号每行一个；多账号格式以该脚本文档为准 |
 | `scripts/smzdm_checkin.js` | `SMZDM_SK` | 是 | 格式：同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIE_BA_COOKIE` | 是 | 格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准 |
+| `scripts/tieba_checkin.py` | `TIEBA_COOKIE` | 是 | 格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准 |
 
 ### 可选参数
 
@@ -63,7 +63,7 @@
 
 - `scripts/cfmoto_checkin.py`：CFMOTO_COOKIE 每行一个账号。
 - `scripts/smzdm_checkin.js`：SMZDM_COOKIE 与 SMZDM_SK 每行一个值，按相同行号配对，行数必须一致。
-- `scripts/tieba_checkin.py`：TIE_BA_COOKIE 每行一个账号，不使用 & 拼接。
+- `scripts/tieba_checkin.py`：TIEBA_COOKIE 每行一个账号，不使用 & 拼接；旧名称 TIE_BA_COOKIE 暂时兼容。
 
 ## 参数获取方法
 
@@ -90,7 +90,7 @@
 - 填写格式：`同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-#### `TIE_BA_COOKIE`
+#### `TIEBA_COOKIE`
 
 - 所属脚本：`scripts/tieba_checkin.py`
 - 获取或设置：本人浏览器登录 tieba.baidu.com，打开开发者工具 → Network，选择发往 tieba.baidu.com 的已登录请求并复制完整 Cookie 请求头。
@@ -115,7 +115,7 @@
 #### `CFMOTO_POST_CONTENTS`
 
 - 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；按需自行编写公开发帖和评论文案。
+- 获取或设置：无需获取；仅在随机文案接口不可用时，作为自定义本地兜底文案。
 - 填写格式：`多条内容用换行或 | 分隔`
 
 #### `CFMOTO_RANDOM_DELAY_MAX`
@@ -184,21 +184,21 @@
 
 ## 验证与兼容性
 
-- `scripts/cfmoto_checkin.py`：SHA-256 `a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4`；live 业务成功证据位于 `projects/checkin/validation/cfmoto`。
+- `scripts/cfmoto_checkin.py`：SHA-256 `a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
 - `scripts/smzdm_checkin.js`：SHA-256 `59316df8bbdbacdb2c81ea3add726752053df9df9c03973965fb404ad3293df1`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
-- `scripts/tieba_checkin.py`：SHA-256 `1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
+- `scripts/tieba_checkin.py`：SHA-256 `77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
 发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 
 ## 副作用与风险
 
-- `scripts/cfmoto_checkin.py`：改变账号的当日签到和积分状态；最多发布三个公开帖子并留下可见内容；最多产生三次公开评论、三次点赞和三次分享任务记录。
+- `scripts/cfmoto_checkin.py`：改变账号的当日签到和积分状态；最多发布三个公开帖子并留下可见内容；最多产生三次公开评论、三次点赞和三次分享任务记录；发帖和评论前访问第三方一言接口获取公开随机文本，不发送春风动力账号凭据。
 - `scripts/smzdm_checkin.js`：改变什么值得买账号的当日签到与连续签到状态；满足条件时领取奖励并改变账号奖励状态。
 - `scripts/tieba_checkin.py`：向百度贴吧提交签到请求并改变账号在对应贴吧的当日签到状态。
 
 ## 脚本功能
 
-- `scripts/cfmoto_checkin.py`：执行每日签到；按配置发布帖子、评论、点赞并完成分享积分任务。
+- `scripts/cfmoto_checkin.py`：执行每日签到；发帖和评论优先使用接口随机文本，返回出处时拼接作者与作品信息，接口异常时使用本地文案兜底；按配置发布帖子、评论、点赞并完成分享积分任务。
 - `scripts/smzdm_checkin.js`：查询账号签到状态与连续签到奖励；执行每日签到；满足条件时领取额外奖励。
 - `scripts/tieba_checkin.py`：获取账号关注的贴吧列表；为尚未签到的贴吧执行每日签到；汇总每个账号的成功与失败数量。
 
