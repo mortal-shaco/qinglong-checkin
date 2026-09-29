@@ -8,6 +8,115 @@
   "releaseLicense": "GPL-3.0-only",
   "scripts": [
     {
+      "catalogId": "9c6fa7a75879fa8b",
+      "displayName": "阿里云盘签到",
+      "path": "scripts/aliyunpan_checkin.py",
+      "sha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+      "stage": "released",
+      "license": "MIT",
+      "licenseGate": "allowed-permissive",
+      "source": {
+        "repository": "agluo/ql-script-hub",
+        "branch": "master",
+        "commit": "a8d39b97cb22c3ac657089014df754342b456ff6",
+        "originalPath": "aliyunpan_checkin.py"
+      },
+      "cron": "3 11 * * *",
+      "command": "python3 scripts/aliyunpan_checkin.py",
+      "environment": [
+        {
+          "name": "ALIYUN_REFRESH_TOKEN",
+          "required": true,
+          "sensitive": true,
+          "howToGet": "Sign in to the Aliyun Drive web application and copy the refresh_token value from its authenticated browser storage. Never share it.",
+          "format": "One non-empty refresh token per line; blank lines are ignored."
+        },
+        {
+          "name": "ALIYUN_DRIVE_DRY_RUN",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "Set to 1 to simulate every account without network access, delay, check-in, or credential persistence.",
+          "format": "Boolean: 1, true, yes, or on enables it."
+        },
+        {
+          "name": "ALIYUN_MAX_DELAY_SECONDS",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "Optional maximum random delay before a live run; defaults to 0.",
+          "format": "Non-negative integer seconds."
+        },
+        {
+          "name": "ALIYUN_PERSIST_ROTATED_TOKENS",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "Explicitly set to 1 only if rotated refresh tokens should be written through the file adapter; disabled by default.",
+          "format": "Boolean: 1, true, yes, or on enables it."
+        },
+        {
+          "name": "ALIYUN_TOKEN_OUTPUT_FILE",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "Choose an existing-directory absolute path for the opt-in token file. It is required only when persistence is enabled.",
+          "format": "Absolute filesystem path; the file is atomically replaced with mode 0600 and contains one token per line."
+        },
+        {
+          "name": "QINGLONG_NOTIFY",
+          "required": false,
+          "sensitive": false,
+          "default": "1",
+          "howToGet": "无需获取；默认通过青龙 notify.py 推送脱敏任务总结，设为 0 可关闭。"
+        },
+        {
+          "name": "QINGLONG_NOTIFY_DIR",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "仅当 notify.py 不在青龙标准路径时，填写其所在目录。",
+          "format": "本地目录路径"
+        }
+      ],
+      "multiAccount": {
+        "supported": true,
+        "separator": "newline",
+        "rule": "ALIYUN_REFRESH_TOKEN uses one non-empty account per line; blank lines are ignored and every account is processed independently."
+      },
+      "dependencies": [],
+      "features": [
+        "Daily Aliyun Drive membership check-in with explicit response validation",
+        "Independent newline-delimited multi-account processing with aggregate exit status",
+        "Network-free deterministic dry-run simulation",
+        "Refresh-token rotation detection with optional secure file persistence"
+      ],
+      "sideEffects": [
+        "Performs an Aliyun Drive membership check-in for each account during live runs",
+        "Refreshes each account access token and may rotate its refresh token during live runs",
+        "When explicitly enabled, atomically writes current refresh tokens to the configured local file"
+      ],
+      "review": {
+        "staticPassed": true,
+        "sandboxPassed": true,
+        "humanAccepted": true,
+        "sideEffectsReviewed": true
+      },
+      "validation": {
+        "status": "passed",
+        "evidence": "projects/checkin/validation/9c6fa7a75879fa8b",
+        "candidateSha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+        "evidenceCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
+        "reuseAttestation": {
+          "component": "qinglong-notification",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T06:36:03.946332+00:00",
+          "reason": "仅补充统一青龙脱敏任务总结通知，不改变阿里云盘业务执行。",
+          "fromCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
+          "toCandidateSha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
+      }
+    },
+    {
       "catalogId": "0ba7bb41fd4c339c",
       "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
@@ -111,6 +220,90 @@
         "status": "passed",
         "evidence": "projects/checkin/validation/0ba7bb41fd4c339c",
         "candidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7"
+      }
+    },
+    {
+      "catalogId": "ks_cleanroom_v1",
+      "displayName": "快手奖励任务",
+      "path": "scripts/kuaishou_reward_status.py",
+      "sha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+      "stage": "released",
+      "license": "MIT",
+      "licenseGate": "allowed-permissive",
+      "source": {
+        "kind": "clean-room",
+        "owner": "mortal-shaco",
+        "originalPath": "candidates/ks_cleanroom_v1/kuaishou_reward_status.py",
+        "specification": "specs/kuaishou-reward-status.md",
+        "isolationEvidence": "reviews/clean-room/kuaishou-reward-status.md"
+      },
+      "cron": "38 8,14,20 * * *",
+      "command": "python3 scripts/kuaishou_reward_status.py",
+      "environment": [
+        {
+          "name": "KUAISHOU_COOKIE",
+          "required": true,
+          "sensitive": true,
+          "howToGet": "在本人已登录的快手或快手极速版中打开“积分换好礼”页面，从本人控制的本地网络调试记录里找到 accelerate/info 请求，复制 Cookie 请求头；至少保留 kuaishou.api_st。不要绕过证书固定或使用第三方提取网站。",
+          "format": "每个账号一行完整 Cookie；每行至少包含 kuaishou.api_st=...；不使用 & 或 @ 分隔"
+        },
+        {
+          "name": "KUAISHOU_DRY_RUN",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "无需获取；预演时手工设置为 1，正式查询时删除或设为 0。",
+          "format": "1/true/yes/on 开启断网预演"
+        },
+        {
+          "name": "QINGLONG_NOTIFY",
+          "required": false,
+          "sensitive": false,
+          "default": "1",
+          "howToGet": "无需获取；默认通过青龙 notify.py 推送脱敏任务总结，设为 0 可关闭。"
+        },
+        {
+          "name": "QINGLONG_NOTIFY_DIR",
+          "required": false,
+          "sensitive": false,
+          "howToGet": "仅当 notify.py 不在青龙标准路径时，填写其所在目录。",
+          "format": "本地目录路径"
+        }
+      ],
+      "multiAccount": {
+        "supported": true,
+        "separator": "newline",
+        "rule": "KUAISHOU_COOKIE 每个非空行对应一个账号；任一账号失败时任务整体非零退出"
+      },
+      "dependencies": [],
+      "features": [
+        "只读查询快手收益与任务状态",
+        "按白名单输出非敏感状态字段",
+        "换行多账号独立执行并汇总"
+      ],
+      "sideEffects": [],
+      "review": {
+        "staticPassed": true,
+        "sandboxPassed": true,
+        "humanAccepted": true,
+        "sideEffectsReviewed": true
+      },
+      "validation": {
+        "status": "passed",
+        "evidence": "projects/checkin/validation/ks_cleanroom_v1",
+        "candidateSha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+        "evidenceCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
+        "reuseAttestation": {
+          "component": "qinglong-notification",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T06:36:03.946332+00:00",
+          "reason": "仅补充统一青龙脱敏任务总结通知，不改变快手只读查询业务。",
+          "fromCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
+          "toCandidateSha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
       }
     },
     {

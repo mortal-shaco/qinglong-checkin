@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "ks_cleanroom_v1",
+  "candidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
+  "source": {
+    "kind": "clean-room",
+    "owner": "mortal-shaco",
+    "path": "candidates/ks_cleanroom_v1/kuaishou_reward_status.py",
+    "originalPath": "kuaishou_reward_status.py",
+    "specification": "specs/kuaishou-reward-status.md",
+    "isolationEvidence": "reviews/clean-room/kuaishou-reward-status.md"
+  },
+  "testedAt": "2026-09-29T06:11:48.217975+00:00",
+  "finishedAt": "2026-09-29T06:11:48.413365+00:00",
+  "mode": "live",
+  "runner": "local-sandbox-validator",
+  "runtime": {
+    "command": "python3.14"
+  },
+  "accountType": "local-user-configured",
+  "exitCode": 0,
+  "timedOut": false,
+  "businessResult": "success",
+  "failureDiagnosis": null,
+  "sideEffectsObserved": [],
+  "log": "redacted.log",
+  "humanDecision": {
+    "status": "passed",
+    "decidedBy": "mortal-shaco",
+    "decidedAt": "2026-09-29T06:11:57.681415+00:00"
+  }
+}

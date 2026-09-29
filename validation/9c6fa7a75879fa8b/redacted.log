@@ -1,0 +1,9 @@
+[stdout]
+Aliyun Drive check-in: 1 account(s)
+Account 1: starting
+Account 1: CHECK-IN SUCCESS (day count 27)
+Account 1: refresh token rotated (value not displayed)
+Rotated-token persistence: disabled; update credentials manually
+ALL ACCOUNTS SUCCEEDED: 1 account(s)
+
+[stderr]

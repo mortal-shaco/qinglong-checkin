@@ -1,0 +1,5 @@
+[stdout]
+{"event":"account","account":1,"ok":true,"result":"status-read","status":{}}
+{"event":"summary","mode":"live","total":1,"failed":0}
+
+[stderr]
