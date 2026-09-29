@@ -33,31 +33,37 @@
 
 ### 必选参数（优先配置）
 
-| 脚本 | 变量 | 敏感 | 填写格式 |
-| --- | --- | --- | --- |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_COOKIE` | 是 | 格式：ticket=<value> 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_COOKIE` | 是 | 格式：完整 Cookie，必须包含 sess=<value>；多账号每行一个；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_SK` | 是 | 格式：同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_COOKIE` | 是 | 格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准 |
+<table>
+<thead><tr><th>脚本</th><th>变量</th><th>敏感</th><th>填写格式</th></tr></thead>
+<tbody>
+<tr><td rowspan="1"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_COOKIE</code></td><td>是</td><td>格式：ticket=&lt;value&gt; 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="2"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_COOKIE</code></td><td>是</td><td>格式：完整 Cookie，必须包含 sess=&lt;value&gt;；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>SMZDM_SK</code></td><td>是</td><td>格式：同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="1"><code>scripts/tieba_checkin.py</code></td><td><code>TIEBA_COOKIE</code></td><td>是</td><td>格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
+</tbody>
+</table>
 
 ### 可选参数
 
 不需要自定义行为时可以不配置；有默认值的参数会自动使用默认值。
 
-| 脚本 | 变量 | 敏感 | 格式与默认值 |
-| --- | --- | --- | --- |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTIVITY_COUNT` | 否 | 默认 `3`；范围 `0-3`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTION_DELAY` | 否 | 默认 `2`；范围 `0-30`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_POST_CONTENTS` | 否 | 格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_RANDOM_DELAY_MAX` | 否 | 默认 `0`；范围 `0-3600`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_NOTIFY` | 否 | 默认 `1`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_USER_AGENT` | 否 | 多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_USER_AGENT_APP` | 否 | 多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_DELAY_MS` | 否 | 默认 `1200`；范围 `500-10000`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_VERBOSE` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
+<table>
+<thead><tr><th>脚本</th><th>变量</th><th>敏感</th><th>填写格式</th></tr></thead>
+<tbody>
+<tr><td rowspan="7"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_ACTIVITY_COUNT</code></td><td>否</td><td>默认 3；范围 0-3；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_ACTION_DELAY</code></td><td>否</td><td>默认 2；范围 0-30；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_POST_CONTENTS</code></td><td>否</td><td>格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_RANDOM_DELAY_MAX</code></td><td>否</td><td>默认 0；范围 0-3600；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_USER_AGENT</code></td><td>否</td><td>多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>CFMOTO_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="2"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_USER_AGENT_APP</code></td><td>否</td><td>多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>SMZDM_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="3"><code>scripts/tieba_checkin.py</code></td><td><code>TIEBA_DELAY_MS</code></td><td>否</td><td>默认 1200；范围 500-10000；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_VERBOSE</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
+</tbody>
+</table>
 
 多账号统一规则：每行一个账号；需要多个凭据变量时按相同非空行号配对，行数必须一致。
 
