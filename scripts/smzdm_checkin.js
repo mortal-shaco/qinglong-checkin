@@ -96,14 +96,21 @@ function nowText() {
   return new Date().toLocaleString('zh-CN', {hour12: false}).replaceAll('/', '-');
 }
 
+function timeText() {
+  return new Date().toLocaleTimeString('zh-CN', {hour12: false}); // %H:%M:%S
+}
+
+function timeline(message, branch = '◆') {
+  console.log(`${timeText()}  ${branch} ${message}`);
+}
+
 function logBanner(mode, total) {
-  console.log('╔════════════════════════════════════════════════════════════╗');
-  console.log('║                    什么值得买签到任务                      ║');
-  console.log('╚════════════════════════════════════════════════════════════╝');
-  console.log(`🕐 开始时间：${nowText()}`);
-  console.log(`⚙️ 运行模式：${mode}`);
-  console.log(`👥 账号数量：${total}`);
-  console.log('────────────────────────────────────────────────────────────');
+  console.log('什么值得买签到');
+  console.log('═'.repeat(62));
+  console.log(`运行模式  ${mode}`);
+  console.log(`账号数量  ${total}`);
+  console.log(`开始时间  ${nowText()}`);
+  console.log('═'.repeat(62));
 }
 
 function logTaskSummary(summary, notification, startedAt) {
@@ -112,13 +119,17 @@ function logTaskSummary(summary, notification, startedAt) {
   const label = summary.execution === 'ok'
     ? (summary.mode === 'dry-run' ? '预演通过' : '全部成功')
     : (summary.accounts_success > 0 ? '部分失败' : '失败');
-  console.log('\n╔══════════════════════ 任务统计 ══════════════════════╗');
-  console.log(`║ 账号：${summary.accounts_total || 0}｜成功 ${summary.accounts_success || 0}｜失败 ${summary.accounts_failed || 0}`);
-  console.log(`║ 待确认：${summary.accounts_pending_confirmation || 0}｜总耗时：${elapsed.toFixed(1)} 秒`);
-  console.log(`║ 通知：${notification}`);
-  console.log('╚══════════════════════════════════════════════════════╝');
-  console.log(`🏁 完成时间：${nowText()}`);
-  console.log(`⚠️ 最终状态：${label}`);
+  timeline('生成任务总结');
+  timeline(`通知状态：${notification}`, '└─');
+  console.log(`\n${'═'.repeat(24)} 任务统计 ${'═'.repeat(24)}`);
+  console.log(`最终状态  ${label}`);
+  console.log(`账号统计  总数 ${summary.accounts_total || 0} │ 成功 ${summary.accounts_success || 0} │ 失败 ${summary.accounts_failed || 0}`);
+  console.log(`任务统计  总数 ${summary.accounts_total || 0} │ 成功 ${summary.accounts_success || 0} │ 已完成 0 │ 跳过 0 │ 失败 ${summary.accounts_failed || 0}`);
+  console.log(`待确认    ${summary.accounts_pending_confirmation || 0}`);
+  console.log(`通知状态  ${notification}`);
+  console.log(`总耗时    ${elapsed.toFixed(1)} 秒`);
+  console.log(`完成时间  ${nowText()}`);
+  console.log('═'.repeat(62));
   console.log(`TASK_SUMMARY=${JSON.stringify(payload)}`);
 }
 
@@ -274,20 +285,23 @@ async function run(environment = process.env) {
   const results = [];
   for (const [offset, account] of accounts.entries()) {
     const accountStarted = Date.now();
-    console.log(`\n┌─ 账号 ${offset + 1}/${accounts.length}｜账号${String(offset + 1).padStart(2, '0')}`);
-    console.log('│\n├─ [1/4] 参数校验');
-    console.log('│  ✅ sk 与 sess 已配对（内容已隐藏）');
-    console.log('├─ [2/4] 执行签到');
+    const accountLabel = `账号 ${String(offset + 1).padStart(2, '0')}`;
+    console.log('');
+    timeline(`${accountLabel}：[1/4] 参数校验（${offset + 1}/${accounts.length}）`);
+    timeline(`${accountLabel}：✓ sk 与 sess 已配对（内容已隐藏）`, '└─');
+    timeline(`${accountLabel}：[2/4] 执行签到`);
     let result;
     if (dryRun) {
       result = {execution: 'ok', mode: 'dry-run', sign_status: 'planned', requests_planned: 3};
-      console.log('│  ⏭️ 预演模式，未发送签到请求');
-      console.log('├─ [3/4] 查询奖励\n│  ⏭️ 预演模式，未发送奖励查询');
+      timeline(`${accountLabel}：↳ 预演模式，未发送签到请求`, '└─');
+      timeline(`${accountLabel}：[3/4] 查询奖励`);
+      timeline(`${accountLabel}：↳ 预演模式，未发送奖励查询`, '└─');
     } else {
       try {
         result = await runAccount(account, userAgent);
-        console.log(`│  ${result.execution === 'ok' ? '✅' : '❌'} 签到状态：${result.sign_status}`);
-        console.log(`├─ [3/4] 查询奖励\n│  ${result.reward_status === 'confirmed' ? '✅' : '⚠️'} 奖励状态：${result.reward_status || '未执行'}`);
+        timeline(`${accountLabel}：${result.execution === 'ok' ? '✓' : '✗'} 签到状态：${result.sign_status}`, '└─');
+        timeline(`${accountLabel}：[3/4] 查询奖励`);
+        timeline(`${accountLabel}：${result.reward_status === 'confirmed' ? '✓' : '!'} 奖励状态：${result.reward_status || '未执行'}`, '└─');
       } catch (error) {
         result = {
           execution: 'failed',
@@ -296,13 +310,12 @@ async function run(environment = process.env) {
         };
       }
     }
-    console.log('├─ [4/4] 汇总账号结果');
-    console.log(`│  ${result.execution === 'ok' ? '✅ 账号任务完成' : `❌ ${result.error_class || '执行失败'}`}`);
+    timeline(`${accountLabel}：[4/4] 生成账号结果`);
+    timeline(`${accountLabel}：${result.execution === 'ok' ? '✓ 账号任务完成' : `✗ ${result.error_class || '执行失败'}`}`, '└─');
     results.push(result);
     emitResult({account: offset + 1, ...result});
-    console.log('│');
-    console.log(`└─ 账号结果：${result.execution === 'ok' ? '✅ 成功' : '❌ 失败'}`);
-    console.log(`   总任务 1｜成功 ${result.execution === 'ok' ? 1 : 0}｜已完成 0｜跳过 0｜失败 ${result.execution === 'ok' ? 0 : 1}｜用时 ${((Date.now() - accountStarted) / 1000).toFixed(1)} 秒`);
+    timeline(`${accountLabel}：${result.execution === 'ok' ? '✓ 成功' : '✗ 失败'}`);
+    timeline(`总任务 1 │ 成功 ${result.execution === 'ok' ? 1 : 0} │ 已完成 0 │ 跳过 0 │ 失败 ${result.execution === 'ok' ? 0 : 1} │ 用时 ${((Date.now() - accountStarted) / 1000).toFixed(1)} 秒`, '└─');
   }
   const failed = results.filter((item) => item.execution !== 'ok').length;
   const pending = results.filter((item) => (

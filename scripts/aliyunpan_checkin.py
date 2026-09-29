@@ -109,28 +109,32 @@ def notify_summary(body: str, dry_run: bool) -> str:
 
 
 def log_banner(mode: str, account_count: int) -> None:
-    print("╔════════════════════════════════════════════════════════════╗")
-    print("║                    阿里云盘签到任务                        ║")
-    print("╚════════════════════════════════════════════════════════════╝")
-    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚙️ 运行模式：{mode}")
-    print(f"👥 账号数量：{account_count}")
-    print("────────────────────────────────────────────────────────────")
+    print("阿里云盘签到")
+    print("═" * 62)
+    print(f"运行模式  {mode}")
+    print(f"账号数量  {account_count}")
+    print(f"开始时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
+
+
+def timeline(message: str, branch: str = "◆") -> None:
+    print(f"{datetime.now().strftime('%H:%M:%S')}  {branch} {message}")
 
 
 def log_task_summary(payload: dict[str, Any], notification: str, started: float) -> None:
     elapsed = round(time.monotonic() - started, 1)
     payload = {**payload, "elapsed_seconds": elapsed, "notification": notification}
-    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
-    print(
-        f"║ 账号：{payload['accounts_total']}｜成功 {payload['accounts_success']}｜"
-        f"失败 {payload['accounts_failed']}"
-    )
-    print(f"║ 凭据轮换：{payload.get('tokens_rotated', 0)}｜总耗时：{elapsed:.1f} 秒")
-    print(f"║ 通知：{notification}")
-    print("╚══════════════════════════════════════════════════════╝")
-    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚠️ 最终状态：{payload['status_label']}")
+    timeline("生成任务总结")
+    timeline(f"通知状态：{notification}", "└─")
+    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
+    print(f"最终状态  {payload['status_label']}")
+    print(f"账号统计  总数 {payload['accounts_total']} │ 成功 {payload['accounts_success']} │ 失败 {payload['accounts_failed']}")
+    print(f"任务统计  总数 {payload['accounts_total']} │ 成功 {payload['accounts_success']} │ 已完成 0 │ 跳过 0 │ 失败 {payload['accounts_failed']}")
+    print(f"凭据轮换  {payload.get('tokens_rotated', 0)}")
+    print(f"通知状态  {notification}")
+    print(f"总耗时    {elapsed:.1f} 秒")
+    print(f"完成时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
     print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
@@ -329,23 +333,25 @@ def main() -> int:
     results: list[AccountResult] = []
     for index, token in enumerate(tokens, start=1):
         account_started = time.monotonic()
-        print(f"\n┌─ 账号 {index}/{len(tokens)}｜账号{index:02d}")
-        print("│\n├─ [1/3] 参数校验\n│  ✅ Refresh Token 已配置（内容已隐藏）")
-        print("├─ [2/3] 刷新登录凭据\n│  ⏳ 正在处理")
+        print()
+        timeline(f"账号 {index:02d}：[1/3] 参数校验（{index}/{len(tokens)}）")
+        timeline(f"账号 {index:02d}：✓ Refresh Token 已配置（内容已隐藏）", "└─")
+        timeline(f"账号 {index:02d}：[2/3] 刷新登录凭据")
+        timeline(f"账号 {index:02d}：正在处理", "└─")
         result = AliyunDriveClient(token, dry_run).run()
         results.append(result)
         if result.success:
-            print("│  ✅ 登录凭据有效")
-            print(f"├─ [3/3] 执行签到\n│  ✅ 签到成功，累计 {result.sign_days} 天")
+            timeline(f"账号 {index:02d}：✓ 登录凭据有效", "└─")
+            timeline(f"账号 {index:02d}：[3/3] 执行签到")
+            timeline(f"账号 {index:02d}：✓ 签到成功，累计 {result.sign_days} 天", "└─")
             if result.rotated:
-                print("│  ☑️ Refresh Token 已轮换（内容已隐藏）")
+                timeline(f"账号 {index:02d}：☑ Refresh Token 已轮换（内容已隐藏）", "└─")
         else:
-            print(f"│  ❌ 执行失败：{result.error}", file=sys.stderr)
+            timeline(f"账号 {index:02d}：✗ 执行失败：{result.error}", "└─")
             if result.rotated:
-                print("│  ☑️ Refresh Token 已轮换（内容已隐藏）")
-        print("│")
-        print(f"└─ 账号结果：{'✅ 成功' if result.success else '❌ 失败'}")
-        print(f"   总任务 1｜成功 {1 if result.success else 0}｜已完成 0｜跳过 0｜失败 {0 if result.success else 1}｜用时 {time.monotonic() - account_started:.1f} 秒")
+                timeline(f"账号 {index:02d}：☑ Refresh Token 已轮换（内容已隐藏）", "└─")
+        timeline(f"账号 {index:02d}：{'✓ 成功' if result.success else '✗ 失败'}")
+        timeline(f"总任务 1 │ 成功 {1 if result.success else 0} │ 已完成 0 │ 跳过 0 │ 失败 {0 if result.success else 1} │ 用时 {time.monotonic() - account_started:.1f} 秒", "└─")
 
     failures = sum(not result.success for result in results)
     rotated = any(result.rotated for result in results)

@@ -240,13 +240,16 @@ def notify(summary: str) -> str:
 
 
 def log_banner(mode: str, total: int) -> None:
-    print("╔════════════════════════════════════════════════════════════╗")
-    print("║                    春风动力签到任务                        ║")
-    print("╚════════════════════════════════════════════════════════════╝")
-    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚙️ 运行模式：{mode}")
-    print(f"👥 账号数量：{total}")
-    print("────────────────────────────────────────────────────────────")
+    print("春风动力签到")
+    print("═" * 62)
+    print(f"运行模式  {mode}")
+    print(f"账号数量  {total}")
+    print(f"开始时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
+
+
+def timeline(message: str, branch: str = "◆") -> None:
+    print(f"{datetime.now().strftime('%H:%M:%S')}  {branch} {message}")
 
 
 def log_task_summary(account_results: list[list[Result]], notification: str, started: float, dry_run: bool, status_override: str | None = None) -> None:
@@ -259,14 +262,16 @@ def log_task_summary(account_results: list[list[Result]], notification: str, sta
     status = status_override or ("dry_run" if dry_run and not failed else ("success" if not failed else "partial_failure"))
     label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分成功"))
     payload = {"status": status, "mode": "dry-run" if dry_run else "live", "accounts_total": len(account_results), "accounts_success": len(account_results) - account_failed, "accounts_partial_or_failed": account_failed, "tasks_total": total, "tasks_success": succeeded, "tasks_already_complete": completed, "tasks_skipped": 0, "tasks_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
-    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
-    print(f"║ 账号：{len(account_results)}｜成功 {len(account_results) - account_failed}｜部分/失败 {account_failed}")
-    print(f"║ 子任务：{total}｜成功 {succeeded}｜已完成 {completed}｜跳过 0｜失败 {failed}")
-    print(f"║ 总耗时：{elapsed:.1f} 秒")
-    print(f"║ 通知：{notification}")
-    print("╚══════════════════════════════════════════════════════╝")
-    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚠️ 最终状态：{label}")
+    timeline("生成任务总结")
+    timeline(f"通知状态：{notification}", "└─")
+    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
+    print(f"最终状态  {label}")
+    print(f"账号统计  总数 {len(account_results)} │ 成功 {len(account_results) - account_failed} │ 部分/失败 {account_failed}")
+    print(f"任务统计  总数 {total} │ 成功 {succeeded} │ 已完成 {completed} │ 跳过 0 │ 失败 {failed}")
+    print(f"通知状态  {notification}")
+    print(f"总耗时    {elapsed:.1f} 秒")
+    print(f"完成时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
     print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
@@ -344,27 +349,31 @@ def fetch_random_text(timeout: float = 8.0) -> tuple[str | None, str | None]:
 def activity_content(fallbacks: list[str], action: str, account_index: int) -> str:
     remote, error = fetch_random_text()
     if remote:
-        print(f"│  ✅ {action}使用接口随机文案")
+        timeline(f"账号 {account_index:02d}：✓ {action}使用接口随机文案", "├─")
         return remote
     fallback = random.choice(fallbacks)
-    print(f"│  ⚠️ 文案接口不可用（{error or '未知错误'}），{action}使用本地兜底文案")
+    timeline(f"账号 {account_index:02d}：! 文案接口不可用（{error or '未知错误'}）", "├─")
+    timeline(f"账号 {account_index:02d}：已切换本地兜底文案", "↳")
     return fallback
 
 
 def show(index: int, result: Result) -> None:
-    icon = "☑️" if result.already_done else ("✅" if result.ok else "❌")
-    print(f"│  {icon} {result.message}")
+    icon = "☑" if result.already_done else ("✓" if result.ok else "✗")
+    timeline(f"账号 {index:02d}：{icon} {result.message}", "└─")
 
 
 def run_account(ticket: str, index: int, activity_count: int, action_delay: int) -> list[Result]:
-    print("│\n├─ [1/4] 参数校验\n│  ✅ ticket 字段有效（内容已隐藏）")
-    print("├─ [2/4] 每日签到")
+    timeline(f"账号 {index:02d}：[1/4] 参数校验")
+    timeline(f"账号 {index:02d}：✓ ticket 字段有效（内容已隐藏）", "└─")
+    timeline(f"账号 {index:02d}：[2/4] 每日签到")
     results = [request_task(ticket, 8, "签到")]
     show(index, results[-1])
     contents = post_contents()
-    print(f"├─ [3/4] 社区互动\n│  ⏳ 计划执行 {activity_count} 轮发帖、评论和点赞")
+    timeline(f"账号 {index:02d}：[3/4] 社区互动")
+    timeline(f"账号 {index:02d}：计划执行 {activity_count} 轮发帖、评论、点赞和分享", "└─")
 
     for round_index in range(activity_count):
+        timeline(f"账号 {index:02d}：第 {round_index + 1}/{activity_count} 轮社区互动")
         if action_delay:
             time.sleep(action_delay)
         content = activity_content(contents, "发帖", index)
@@ -396,7 +405,8 @@ def run_account(ticket: str, index: int, activity_count: int, action_delay: int)
         results.append(share_result)
         show(index, share_result)
 
-    print("├─ [4/4] 汇总账号结果\n│  ✅ 全部动作已处理")
+    timeline(f"账号 {index:02d}：[4/4] 生成账号结果")
+    timeline(f"账号 {index:02d}：✓ 全部动作已处理", "└─")
     return results
 
 
@@ -428,21 +438,25 @@ def main() -> int:
         return 2
 
     log_banner("预演" if dry_run else "正式执行", len(tickets))
-    print(f"🧩 互动任务：{activity_count}/{MAX_DAILY_ACTIVITIES} 轮")
+    timeline(f"互动任务：{activity_count}/{MAX_DAILY_ACTIVITIES} 轮", "└─")
     if delay:
-        print(f"[{NAME}] 随机延迟 {delay} 秒。")
+        timeline(f"随机延迟 {delay} 秒", "└─")
         time.sleep(delay)
 
     account_results: list[list[Result]] = []
     for index, ticket in enumerate(tickets, 1):
         account_started = time.monotonic()
-        print(f"\n┌─ 账号 {index}/{len(tickets)}｜账号{index:02d}")
+        print()
+        timeline(f"账号 {index:02d} 开始执行（{index}/{len(tickets)}）")
         if dry_run:
             planned = 1 + activity_count * 4
-            print("│\n├─ [1/4] 参数校验\n│  ✅ ticket 字段有效（内容已隐藏）")
-            print("├─ [2/4] 每日签到\n│  ⏭️ 预演未发送请求")
-            print(f"├─ [3/4] 社区互动\n│  ⏭️ 计划 {planned - 1} 个互动请求，未发送")
-            print("├─ [4/4] 汇总账号结果")
+            timeline(f"账号 {index:02d}：[1/4] 参数校验")
+            timeline(f"账号 {index:02d}：✓ ticket 字段有效（内容已隐藏）", "└─")
+            timeline(f"账号 {index:02d}：[2/4] 每日签到")
+            timeline(f"账号 {index:02d}：↳ 预演未发送请求", "└─")
+            timeline(f"账号 {index:02d}：[3/4] 社区互动")
+            timeline(f"账号 {index:02d}：↳ 计划 {planned - 1} 个互动请求，未发送", "└─")
+            timeline(f"账号 {index:02d}：[4/4] 生成账号结果")
             results = [Result(True, f"预演完成，计划 {planned} 个请求，未发送任何请求")]
             show(index, results[0])
         else:
@@ -451,9 +465,9 @@ def main() -> int:
         failed = sum(not item.ok for item in results)
         success = sum(item.ok and not item.already_done for item in results)
         completed = sum(item.already_done for item in results)
-        print("│")
-        print(f"└─ 账号结果：{'✅ 成功' if not failed else '⚠️ 部分成功' if success or completed else '❌ 失败'}")
-        print(f"   总任务 {len(results)}｜成功 {success}｜已完成 {completed}｜跳过 0｜失败 {failed}｜用时 {time.monotonic() - account_started:.1f} 秒")
+        account_label = "✓ 成功" if not failed else "! 部分成功" if success or completed else "✗ 失败"
+        timeline(f"账号 {index:02d}：{account_label}")
+        timeline(f"总任务 {len(results)} │ 成功 {success} │ 已完成 {completed} │ 跳过 0 │ 失败 {failed} │ 用时 {time.monotonic() - account_started:.1f} 秒", "└─")
 
     succeeded_accounts = sum(all(result.ok for result in results) for results in account_results)
     failed_accounts = len(account_results) - succeeded_accounts

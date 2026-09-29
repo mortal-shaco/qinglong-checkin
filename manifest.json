@@ -11,7 +11,7 @@
       "catalogId": "9c6fa7a75879fa8b",
       "displayName": "阿里云盘签到",
       "path": "scripts/aliyunpan_checkin.py",
-      "sha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
+      "sha256": "4b1884c921accb1fe4555d1eca158f6ab1acbea919d95c32e0fa1d92df7a3c00",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -100,15 +100,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/9c6fa7a75879fa8b",
-        "candidateSha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
+        "candidateSha256": "4b1884c921accb1fe4555d1eca158f6ab1acbea919d95c32e0fa1d92df7a3c00",
         "evidenceCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
         "reuseAttestation": {
           "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
-          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变阿里云盘业务执行。",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一阿里云盘签到日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
           "fromCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
-          "toCandidateSha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
+          "toCandidateSha256": "4b1884c921accb1fe4555d1eca158f6ab1acbea919d95c32e0fa1d92df7a3c00",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -120,7 +120,7 @@
       "catalogId": "d9230b69d9462c7c",
       "displayName": "百度网盘签到",
       "path": "scripts/baiduwangpan_checkin.py",
-      "sha256": "446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07",
+      "sha256": "e9c658f4544427bd94ab4da74a724038d1f849c8b9665464ded6e8a1c4dd2c18",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -197,12 +197,25 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/d9230b69d9462c7c",
-        "candidateSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612"
+        "candidateSha256": "93bf4735b84783510eac5eba003a1ca482cfa25770c3021c940e80d9c07d6b13",
+        "evidenceCandidateSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
+        "reuseAttestation": {
+          "component": "shared-logging",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一百度网盘签到日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
+          "fromCandidateSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
+          "toCandidateSha256": "93bf4735b84783510eac5eba003a1ca482cfa25770c3021c940e80d9c07d6b13",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
       },
       "packaging": {
         "type": "qinglong-discovery-metadata",
-        "validatedSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
-        "releaseSha256": "446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07",
+        "validatedSha256": "93bf4735b84783510eac5eba003a1ca482cfa25770c3021c940e80d9c07d6b13",
+        "releaseSha256": "e9c658f4544427bd94ab4da74a724038d1f849c8b9665464ded6e8a1c4dd2c18",
         "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
@@ -210,7 +223,7 @@
       "catalogId": "0ba7bb41fd4c339c",
       "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
-      "sha256": "7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314",
+      "sha256": "15ecc5e482af800b18360374359667392176fe88ab77c7950509da115f09f07a",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -316,15 +329,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/0ba7bb41fd4c339c",
-        "candidateSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+        "candidateSha256": "1cf5f435d392df5014712a1955a0123ce86b90384a640c170b2a6ca5735f0250",
         "evidenceCandidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
         "reuseAttestation": {
           "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
-          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变春风动力业务执行。",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一春风动力签到日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
           "fromCandidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
-          "toCandidateSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+          "toCandidateSha256": "1cf5f435d392df5014712a1955a0123ce86b90384a640c170b2a6ca5735f0250",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -333,8 +346,8 @@
       },
       "packaging": {
         "type": "qinglong-discovery-metadata",
-        "validatedSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
-        "releaseSha256": "7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314",
+        "validatedSha256": "1cf5f435d392df5014712a1955a0123ce86b90384a640c170b2a6ca5735f0250",
+        "releaseSha256": "15ecc5e482af800b18360374359667392176fe88ab77c7950509da115f09f07a",
         "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
@@ -342,7 +355,7 @@
       "catalogId": "ks_cleanroom_v1",
       "displayName": "快手奖励任务",
       "path": "scripts/kuaishou_reward_status.py",
-      "sha256": "d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2",
+      "sha256": "b727e90b3326ec58b00281be13ad27879cb75be0af9a9c5c0a93fe3fbd8aa305",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -406,15 +419,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/ks_cleanroom_v1",
-        "candidateSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
+        "candidateSha256": "484a16b450e0d60eead2d0f626449d231c9b342ae841f2a3a46fe6438dc8a57a",
         "evidenceCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
         "reuseAttestation": {
           "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
-          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变快手只读查询业务。",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一快手奖励任务日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
           "fromCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
-          "toCandidateSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
+          "toCandidateSha256": "484a16b450e0d60eead2d0f626449d231c9b342ae841f2a3a46fe6438dc8a57a",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -423,8 +436,8 @@
       },
       "packaging": {
         "type": "qinglong-discovery-metadata",
-        "validatedSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
-        "releaseSha256": "d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2",
+        "validatedSha256": "484a16b450e0d60eead2d0f626449d231c9b342ae841f2a3a46fe6438dc8a57a",
+        "releaseSha256": "b727e90b3326ec58b00281be13ad27879cb75be0af9a9c5c0a93fe3fbd8aa305",
         "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
@@ -432,7 +445,7 @@
       "catalogId": "621df252c315f2d1",
       "displayName": "什么值得买签到",
       "path": "scripts/smzdm_checkin.js",
-      "sha256": "015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c",
+      "sha256": "f46226280679776e3a2e7cdb7fa2c7b49207d74348472422c7bf78e47ac1193f",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -499,15 +512,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/621df252c315f2d1",
-        "candidateSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
+        "candidateSha256": "fa4774987cd30127fd7b597ce5029bf7507bc68dbbbbe709ed100caea6263be9",
         "evidenceCandidateSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd",
         "reuseAttestation": {
           "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
-          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变什么值得买签到业务执行。",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一什么值得买签到日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
           "fromCandidateSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd",
-          "toCandidateSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
+          "toCandidateSha256": "fa4774987cd30127fd7b597ce5029bf7507bc68dbbbbe709ed100caea6263be9",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -516,8 +529,8 @@
       },
       "packaging": {
         "type": "qinglong-discovery-metadata",
-        "validatedSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
-        "releaseSha256": "015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c",
+        "validatedSha256": "fa4774987cd30127fd7b597ce5029bf7507bc68dbbbbe709ed100caea6263be9",
+        "releaseSha256": "f46226280679776e3a2e7cdb7fa2c7b49207d74348472422c7bf78e47ac1193f",
         "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
@@ -525,7 +538,7 @@
       "catalogId": "e608052390d250da",
       "displayName": "百度贴吧签到",
       "path": "scripts/tieba_checkin.py",
-      "sha256": "a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2",
+      "sha256": "6033addc33f3e0cbe9a15e470d074e051e9efd360231e765bed20d984994376a",
       "stage": "released",
       "license": "GPL-3.0-only",
       "licenseGate": "allowed-copyleft",
@@ -600,15 +613,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/e608052390d250da",
-        "candidateSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
+        "candidateSha256": "3f680de64a23c2ddca21d2e74c394bbe148dce429605926d52bacd95f2382575",
         "evidenceCandidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
         "reuseAttestation": {
           "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
-          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变百度贴吧签到业务执行。",
+          "approvedAt": "2026-09-29T08:35:07.144259+00:00",
+          "reason": "按用户确认的第三版时间轴模板统一百度贴吧签到日志；仅改变时间戳、阶段展示和任务统计，不改变业务接口、参数解析、成功条件、业务副作用或退出码。",
           "fromCandidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
-          "toCandidateSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
+          "toCandidateSha256": "3f680de64a23c2ddca21d2e74c394bbe148dce429605926d52bacd95f2382575",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -617,8 +630,8 @@
       },
       "packaging": {
         "type": "qinglong-discovery-metadata",
-        "validatedSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
-        "releaseSha256": "a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2",
+        "validatedSha256": "3f680de64a23c2ddca21d2e74c394bbe148dce429605926d52bacd95f2382575",
+        "releaseSha256": "6033addc33f3e0cbe9a15e470d074e051e9efd360231e765bed20d984994376a",
         "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     }

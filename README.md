@@ -324,12 +324,12 @@
 
 ## 验证与兼容性
 
-- `scripts/aliyunpan_checkin.py`：SHA-256 `bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
-- `scripts/baiduwangpan_checkin.py`：SHA-256 `446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
-- `scripts/cfmoto_checkin.py`：SHA-256 `7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
-- `scripts/kuaishou_reward_status.py`：SHA-256 `d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
-- `scripts/smzdm_checkin.js`：SHA-256 `015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
-- `scripts/tieba_checkin.py`：SHA-256 `a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
+- `scripts/aliyunpan_checkin.py`：SHA-256 `4b1884c921accb1fe4555d1eca158f6ab1acbea919d95c32e0fa1d92df7a3c00`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
+- `scripts/baiduwangpan_checkin.py`：SHA-256 `e9c658f4544427bd94ab4da74a724038d1f849c8b9665464ded6e8a1c4dd2c18`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
+- `scripts/cfmoto_checkin.py`：SHA-256 `15ecc5e482af800b18360374359667392176fe88ab77c7950509da115f09f07a`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
+- `scripts/kuaishou_reward_status.py`：SHA-256 `b727e90b3326ec58b00281be13ad27879cb75be0af9a9c5c0a93fe3fbd8aa305`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
+- `scripts/smzdm_checkin.js`：SHA-256 `f46226280679776e3a2e7cdb7fa2c7b49207d74348472422c7bf78e47ac1193f`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
+- `scripts/tieba_checkin.py`：SHA-256 `6033addc33f3e0cbe9a15e470d074e051e9efd360231e765bed20d984994376a`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
 发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 

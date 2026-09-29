@@ -90,13 +90,16 @@ def notify(summary: str) -> str:
 
 
 def log_banner(mode: str, total: int) -> None:
-    print("╔════════════════════════════════════════════════════════════╗")
-    print("║                    百度贴吧签到任务                        ║")
-    print("╚════════════════════════════════════════════════════════════╝")
-    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚙️ 运行模式：{mode}")
-    print(f"👥 账号数量：{total}")
-    print("────────────────────────────────────────────────────────────")
+    print("百度贴吧签到")
+    print("═" * 62)
+    print(f"运行模式  {mode}")
+    print(f"账号数量  {total}")
+    print(f"开始时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
+
+
+def timeline(message: str, branch: str = "◆") -> None:
+    print(f"{datetime.now().strftime('%H:%M:%S')}  {branch} {message}")
 
 
 def log_task_summary(results: list[dict[str, int]], notification: str, started: float, dry_run: bool, status_override: str | None = None) -> None:
@@ -108,14 +111,16 @@ def log_task_summary(results: list[dict[str, int]], notification: str, started: 
     status = status_override or ("dry_run" if dry_run and not failed else ("success" if not failed else "partial_failure"))
     label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分失败"))
     payload = {"status": status, "mode": "dry-run" if dry_run else "live", "accounts_total": len(results), "accounts_success": len(results) - account_failed, "accounts_failed": account_failed, "tasks_total": total, "tasks_success_or_complete": signed, "tasks_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
-    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
-    print(f"║ 账号：{len(results)}｜成功 {len(results) - account_failed}｜失败 {account_failed}")
-    print(f"║ 子任务：{total}｜成功/已完成 {signed}｜跳过 0｜失败 {failed}")
-    print(f"║ 总耗时：{elapsed:.1f} 秒")
-    print(f"║ 通知：{notification}")
-    print("╚══════════════════════════════════════════════════════╝")
-    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚠️ 最终状态：{label}")
+    timeline("生成任务总结")
+    timeline(f"通知状态：{notification}", "└─")
+    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
+    print(f"最终状态  {label}")
+    print(f"账号统计  总数 {len(results)} │ 成功 {len(results) - account_failed} │ 失败 {account_failed}")
+    print(f"任务统计  总数 {total} │ 成功/已完成 {signed} │ 跳过 0 │ 失败 {failed}")
+    print(f"通知状态  {notification}")
+    print(f"总耗时    {elapsed:.1f} 秒")
+    print(f"完成时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
     print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
@@ -196,20 +201,24 @@ def sign_forum(headers: dict[str, str], tbs: str, name: str) -> tuple[bool, str]
 def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_seconds: float) -> dict[str, int]:
     prefix = f"账号 {index}"
     headers = account_headers(cookie)
-    print("│\n├─ [1/4] 参数校验\n│  ✅ Cookie 必要字段完整（内容已隐藏）")
-    print("├─ [2/4] 登录验证\n│  ⏳ 正在验证 Cookie")
+    timeline(f"账号 {index:02d}：[1/4] 参数校验")
+    timeline(f"账号 {index:02d}：✓ Cookie 必要字段完整（内容已隐藏）", "└─")
+    timeline(f"账号 {index:02d}：[2/4] 登录验证")
+    timeline(f"账号 {index:02d}：正在验证 Cookie", "└─")
     tbs, forums = get_session(headers)
-    print("│  ✅ 登录状态有效")
+    timeline(f"账号 {index:02d}：✓ 登录状态有效", "└─")
     signed = [forum for forum in forums if forum["signed"]]
     pending = [forum for forum in forums if not forum["signed"]]
-    print(f"├─ [3/4] 获取任务\n│  ✅ 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个")
+    timeline(f"账号 {index:02d}：[3/4] 获取任务")
+    timeline(f"账号 {index:02d}：✓ 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个", "└─")
     if verbose and pending:
         print(f"[{prefix}] 待签到：{'、'.join(str(forum['name']) for forum in pending)}")
     if dry_run:
-        print("├─ [4/4] 执行任务\n│  ⏭️ 预演模式，未发送签到请求")
+        timeline(f"账号 {index:02d}：[4/4] 执行任务")
+        timeline(f"账号 {index:02d}：↳ 预演模式，未发送签到请求", "└─")
         return {"total": len(forums), "signed": len(signed), "failed": 0}
 
-    print("├─ [4/4] 执行任务")
+    timeline(f"账号 {index:02d}：[4/4] 执行任务")
     success = len(signed)
     failures = 0
     for position, forum in enumerate(pending, 1):
@@ -218,15 +227,15 @@ def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_sec
             if ok:
                 success += 1
                 if verbose:
-                    print(f"│  ✅ {forum['name']}")
+                    timeline(f"账号 {index:02d}：✓ {forum['name']}", "├─")
             else:
                 failures += 1
                 detail = f"：{forum['name']}（{message}）" if verbose else ""
-                print(f"│  ❌ 第 {position}/{len(pending)} 项签到失败{detail}", file=sys.stderr)
+                timeline(f"账号 {index:02d}：✗ 第 {position}/{len(pending)} 项签到失败{detail}", "├─")
         except Exception as error:  # Continue so the aggregate result remains complete.
             failures += 1
             detail = f"：{forum['name']}（{error}）" if verbose else ""
-            print(f"│  ❌ 第 {position}/{len(pending)} 项请求异常{detail}", file=sys.stderr)
+            timeline(f"账号 {index:02d}：✗ 第 {position}/{len(pending)} 项请求异常{detail}", "├─")
         if position < len(pending):
             time.sleep(delay_seconds)
     return {"total": len(forums), "signed": success, "failed": failures}
@@ -253,21 +262,22 @@ def main() -> int:
     results: list[dict[str, int]] = []
     for index, cookie in enumerate(accounts, 1):
         account_started = time.monotonic()
-        print(f"\n┌─ 账号 {index}/{len(accounts)}｜账号{index:02d}")
+        print()
+        timeline(f"账号 {index:02d} 开始执行（{index}/{len(accounts)}）")
         try:
             result = run_account(cookie, index, dry_run, verbose, delay_ms / 1000)
         except Exception as error:
-            print(f"│  ❌ 账号执行失败：{error}", file=sys.stderr)
+            timeline(f"账号 {index:02d}：✗ 账号执行失败：{error}", "└─")
             result = {"total": 0, "signed": 0, "failed": 1}
         results.append(result)
-        print("│")
-        print(f"└─ 账号结果：{'✅ 成功' if result['failed'] == 0 else '⚠️ 部分成功' if result['signed'] else '❌ 失败'}")
-        print(f"   总任务 {result['total']}｜成功/已完成 {result['signed']}｜跳过 0｜失败 {result['failed']}｜用时 {time.monotonic() - account_started:.1f} 秒")
+        account_label = "✓ 成功" if result["failed"] == 0 else "! 部分成功" if result["signed"] else "✗ 失败"
+        timeline(f"账号 {index:02d}：{account_label}")
+        timeline(f"总任务 {result['total']} │ 成功/已完成 {result['signed']} │ 跳过 0 │ 失败 {result['failed']} │ 用时 {time.monotonic() - account_started:.1f} 秒", "└─")
     total = sum(item["total"] for item in results)
     signed = sum(item["signed"] for item in results)
     failed = sum(item["failed"] for item in results)
     summary = f"{len(accounts)} 个账号，{total} 个贴吧，成功/已签到 {signed} 个，失败 {failed} 个"
-    print(f"\n[{NAME}] 汇总：{summary}。")
+    timeline(f"汇总：{summary}")
     notification = notify(summary)
     log_task_summary(results, notification, started, dry_run)
     return 1 if failed else 0

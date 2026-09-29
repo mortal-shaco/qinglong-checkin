@@ -88,13 +88,16 @@ def notify_summary(body: str, dry_run: bool) -> str:
 
 
 def log_banner(mode: str, total: int) -> None:
-    print("╔════════════════════════════════════════════════════════════╗")
-    print("║                    快手奖励任务                            ║")
-    print("╚════════════════════════════════════════════════════════════╝")
-    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚙️ 运行模式：{mode}")
-    print(f"👥 账号数量：{total}")
-    print("────────────────────────────────────────────────────────────")
+    print("快手奖励任务")
+    print("═" * 62)
+    print(f"运行模式  {mode}")
+    print(f"账号数量  {total}")
+    print(f"开始时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
+
+
+def timeline(message: str, branch: str = "◆") -> None:
+    print(f"{datetime.now().strftime('%H:%M:%S')}  {branch} {message}")
 
 
 def log_task_summary(total: int, failed: int, notification: str, started: float, mode: str, status_override: str | None = None) -> None:
@@ -102,14 +105,16 @@ def log_task_summary(total: int, failed: int, notification: str, started: float,
     status = status_override or ("dry_run" if mode == "dry-run" and not failed else ("success" if not failed else "partial_failure"))
     label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分失败"))
     payload = {"status": status, "mode": mode, "accounts_total": total, "accounts_success": total - failed, "accounts_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
-    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
-    print(f"║ 账号：{total}｜成功 {total - failed}｜失败 {failed}")
-    print(f"║ 子任务：{total}｜成功 {total - failed}｜已完成 0｜跳过 0｜失败 {failed}")
-    print(f"║ 总耗时：{elapsed:.1f} 秒")
-    print(f"║ 通知：{notification}")
-    print("╚══════════════════════════════════════════════════════╝")
-    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⚠️ 最终状态：{label}")
+    timeline("生成任务总结")
+    timeline(f"通知状态：{notification}", "└─")
+    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
+    print(f"最终状态  {label}")
+    print(f"账号统计  总数 {total} │ 成功 {total - failed} │ 失败 {failed}")
+    print(f"任务统计  总数 {total} │ 成功 {total - failed} │ 已完成 0 │ 跳过 0 │ 失败 {failed}")
+    print(f"通知状态  {notification}")
+    print(f"总耗时    {elapsed:.1f} 秒")
+    print(f"完成时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("═" * 62)
     print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
@@ -190,28 +195,28 @@ def main() -> int:
     for index, cookie in enumerate(values, start=1):
         account_started = time.monotonic()
         account_ok = False
-        print(f"\n┌─ 账号 {index}/{len(values)}｜账号{index:02d}")
-        print("│\n├─ [1/3] 参数校验")
+        print()
+        timeline(f"账号 {index:02d}：[1/3] 参数校验（{index}/{len(values)}）")
         try:
             validate_cookie(cookie)
-            print("│  ✅ Cookie 必要字段完整（内容已隐藏）")
-            print("├─ [2/3] 查询奖励状态")
+            timeline(f"账号 {index:02d}：✓ Cookie 必要字段完整（内容已隐藏）", "└─")
+            timeline(f"账号 {index:02d}：[2/3] 查询奖励状态")
             if dry_run:
-                print("│  ⏭️ 预演模式，未发送网络请求")
+                timeline(f"账号 {index:02d}：↳ 预演模式，未发送网络请求", "└─")
                 emit("account", account=index, ok=True, result="dry-run-no-network")
             else:
                 status = query(cookie)
-                print("│  ✅ 奖励状态读取成功")
+                timeline(f"账号 {index:02d}：✓ 奖励状态读取成功", "└─")
                 emit("account", account=index, ok=True, result="status-read", status=status)
-            print("├─ [3/3] 汇总账号结果\n│  ✅ 账号任务完成")
+            timeline(f"账号 {index:02d}：[3/3] 生成账号结果")
+            timeline(f"账号 {index:02d}：✓ 账号任务完成", "└─")
             account_ok = True
         except (ValueError, RuntimeError, json.JSONDecodeError, urllib.error.URLError, TimeoutError) as error:
             failed += 1
-            print(f"│  ❌ 查询失败：{error}", file=sys.stderr)
+            timeline(f"账号 {index:02d}：✗ 查询失败：{error}", "└─")
             emit("account", account=index, ok=False, error=str(error))
-        print("│")
-        print(f"└─ 账号结果：{'✅ 成功' if account_ok else '❌ 失败'}")
-        print(f"   总任务 1｜成功 {1 if account_ok else 0}｜已完成 0｜跳过 0｜失败 {0 if account_ok else 1}｜用时 {time.monotonic() - account_started:.1f} 秒")
+        timeline(f"账号 {index:02d}：{'✓ 成功' if account_ok else '✗ 失败'}")
+        timeline(f"总任务 1 │ 成功 {1 if account_ok else 0} │ 已完成 0 │ 跳过 0 │ 失败 {0 if account_ok else 1} │ 用时 {time.monotonic() - account_started:.1f} 秒", "└─")
     emit("summary", mode=mode, total=len(values), failed=failed)
     notification = notify_summary(
         f"模式：{mode}；账号：{len(values)}；成功：{len(values) - failed}；失败：{failed}",
