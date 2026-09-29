@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# name: 百度网盘每日签到与答题
+# name: 百度网盘签到
 # cron: 0 9 * * *
 # SPDX-License-Identifier: MIT
 # Maintained standalone adaptation of baiduwangpan_checkin.py from

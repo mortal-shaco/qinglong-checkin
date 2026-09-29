@@ -120,7 +120,7 @@
       "catalogId": "d9230b69d9462c7c",
       "displayName": "百度网盘签到",
       "path": "scripts/baiduwangpan_checkin.py",
-      "sha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
+      "sha256": "446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -198,13 +198,19 @@
         "status": "passed",
         "evidence": "projects/checkin/validation/d9230b69d9462c7c",
         "candidateSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612"
+      },
+      "packaging": {
+        "type": "qinglong-discovery-metadata",
+        "validatedSha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
+        "releaseSha256": "446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07",
+        "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
     {
       "catalogId": "0ba7bb41fd4c339c",
       "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
-      "sha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+      "sha256": "7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -324,13 +330,19 @@
           "successCriteriaUnchanged": true,
           "sideEffectsUnchanged": true
         }
+      },
+      "packaging": {
+        "type": "qinglong-discovery-metadata",
+        "validatedSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+        "releaseSha256": "7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314",
+        "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
     {
       "catalogId": "ks_cleanroom_v1",
       "displayName": "快手奖励任务",
       "path": "scripts/kuaishou_reward_status.py",
-      "sha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
+      "sha256": "d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -408,6 +420,12 @@
           "successCriteriaUnchanged": true,
           "sideEffectsUnchanged": true
         }
+      },
+      "packaging": {
+        "type": "qinglong-discovery-metadata",
+        "validatedSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
+        "releaseSha256": "d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2",
+        "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
     {
@@ -497,10 +515,10 @@
         }
       },
       "packaging": {
-        "type": "qinglong-discovery-comments",
+        "type": "qinglong-discovery-metadata",
         "validatedSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
         "releaseSha256": "015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c",
-        "statement": "Only non-executable name/cron comments were added during release staging."
+        "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     },
     {
@@ -598,10 +616,10 @@
         }
       },
       "packaging": {
-        "type": "qinglong-discovery-comments",
+        "type": "qinglong-discovery-metadata",
         "validatedSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
         "releaseSha256": "a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2",
-        "statement": "Only non-executable name/cron comments were added during release staging."
+        "statement": "Only Qinglong task display metadata (name/cron comments and new Env title) was normalized during release staging."
       }
     }
   ]

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+# name: 快手奖励任务
+# cron: 38 8,14,20 * * *
 """Read-only Kuaishou reward status for Qinglong.
 
-name: 快手收益状态查询
+name: 快手奖励任务
 cron: 38 8,14,20 * * *
-new Env('快手收益状态查询')
+new Env('快手奖励任务')
 """
 
 from __future__ import annotations

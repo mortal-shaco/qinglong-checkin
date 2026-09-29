@@ -325,9 +325,9 @@
 ## 验证与兼容性
 
 - `scripts/aliyunpan_checkin.py`：SHA-256 `bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
-- `scripts/baiduwangpan_checkin.py`：SHA-256 `62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
-- `scripts/cfmoto_checkin.py`：SHA-256 `602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
-- `scripts/kuaishou_reward_status.py`：SHA-256 `d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
+- `scripts/baiduwangpan_checkin.py`：SHA-256 `446704ef7aeec1ce85678dd9fc8562847da145024c36f04911d78a21aa3aec07`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
+- `scripts/cfmoto_checkin.py`：SHA-256 `7932a7d18217fc0e8adc13124c824607f443f1e510213aad43190cf8523e4314`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
+- `scripts/kuaishou_reward_status.py`：SHA-256 `d81630815fc2041ede43631673e13555bc2309f28a89b0fbea113bf2285521d2`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
 - `scripts/smzdm_checkin.js`：SHA-256 `015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
 - `scripts/tieba_checkin.py`：SHA-256 `a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
