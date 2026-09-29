@@ -15,8 +15,8 @@
 分支：main
 定时类型：crontab
 定时规则：17 4 * * *
-白名单：^(scripts/install_dependencies\.sh|scripts/aliyunpan_checkin\.py|scripts/cfmoto_checkin\.py|scripts/kuaishou_reward_status\.py|scripts/smzdm_checkin\.js|scripts/tieba_checkin\.py)$
-黑名单：(^|/)(tests?|docs?|validation)/|(^|/)(README|CHANGELOG|LICENSE)(\.|$)
+白名单：^scripts/.*\.(js|py|sh)$
+黑名单：(^|/)(tests?|docs?|validation|shared|__pycache__)(/|$)|(^|/)(README|CHANGELOG|LICENSE)(\.|$)|(^|/)[._]
 ```
 
 ## 建议订阅周期
@@ -25,7 +25,7 @@
 
 ## 黑白名单设置
 
-白名单应精确使用订阅配置中的脚本路径表达式，并保留 `scripts/install_dependencies.sh`。黑名单排除文档、测试和脱敏验证材料，避免青龙把非任务文件识别为脚本。若面板显示“文件后缀”，填写 `js py sh`。
+采用固定的目录级规则，不再逐个枚举脚本：白名单只同步 `scripts/` 下的 `js`、`py`、`sh` 文件，因此以后新增业务脚本无需修改订阅。黑名单进一步排除文档、测试、脱敏验证材料、`shared/` 公共组件、缓存、隐藏文件和下划线开头的辅助文件。非任务组件必须放入 `shared/`，不得放在 `scripts/`；`scripts/` 中的任务必须带青龙可识别的 `name:` / `cron:` 元数据。若面板显示“文件后缀”，填写 `js py sh`。
 
 ## 环境变量与参数
 
