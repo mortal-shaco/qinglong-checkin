@@ -1,5 +1,0 @@
-[stdout]
-BENEFIT_RESULT={"account":1,"execution":"ok","sign_status":"new_complete","sign_days":"2","reward_status":"confirmed","extra_reward_status":"not_available"}
-BENEFIT_SUMMARY={"execution":"ok","mode":"live","accounts_total":1,"accounts_success":1,"accounts_failed":0}
-
-[stderr]
