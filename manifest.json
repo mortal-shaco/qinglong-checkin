@@ -118,7 +118,7 @@
     },
     {
       "catalogId": "d9230b69d9462c7c",
-      "displayName": "baiduwangpan checkin",
+      "displayName": "百度网盘签到",
       "path": "scripts/baiduwangpan_checkin.py",
       "sha256": "62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612",
       "stage": "released",
