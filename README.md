@@ -29,26 +29,35 @@
 
 ## 环境变量与参数
 
-在青龙面板 → 环境变量中逐项新增。敏感值不得写入脚本、订阅地址或日志。
+先配置“必选参数”再运行脚本；缺少任一必选参数时任务会失败。可选参数只用于调整行为，不影响首次配置。敏感值不得写入脚本、订阅地址或日志。
 
-| 脚本 | 变量 | 必填 | 敏感 | 格式与默认值 |
-| --- | --- | --- | --- | --- |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_COOKIE` | 是 | 是 | 格式：ticket=<value> 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTIVITY_COUNT` | 否 | 否 | 默认 `3`；范围 `0-3`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTION_DELAY` | 否 | 否 | 默认 `2`；范围 `0-30`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_POST_CONTENTS` | 否 | 否 | 格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_RANDOM_DELAY_MAX` | 否 | 否 | 默认 `0`；范围 `0-3600`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_NOTIFY` | 否 | 否 | 默认 `1`；多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_USER_AGENT` | 否 | 否 | 多账号格式以该脚本文档为准 |
-| `scripts/cfmoto_checkin.py` | `CFMOTO_DRY_RUN` | 否 | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_COOKIE` | 是 | 是 | 格式：完整 Cookie，必须包含 sess=<value>；多账号每行一个；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_SK` | 是 | 是 | 格式：同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对；多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_USER_AGENT_APP` | 否 | 否 | 多账号格式以该脚本文档为准 |
-| `scripts/smzdm_checkin.js` | `SMZDM_DRY_RUN` | 否 | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIE_BA_COOKIE` | 是 | 是 | 格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_DELAY_MS` | 否 | 否 | 默认 `1200`；范围 `500-10000`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_VERBOSE` | 否 | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
-| `scripts/tieba_checkin.py` | `TIEBA_DRY_RUN` | 否 | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
+### 必选参数（优先配置）
+
+| 脚本 | 变量 | 敏感 | 填写格式 |
+| --- | --- | --- | --- |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_COOKIE` | 是 | 格式：ticket=<value> 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准 |
+| `scripts/smzdm_checkin.js` | `SMZDM_COOKIE` | 是 | 格式：完整 Cookie，必须包含 sess=<value>；多账号每行一个；多账号格式以该脚本文档为准 |
+| `scripts/smzdm_checkin.js` | `SMZDM_SK` | 是 | 格式：同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对；多账号格式以该脚本文档为准 |
+| `scripts/tieba_checkin.py` | `TIE_BA_COOKIE` | 是 | 格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准 |
+
+### 可选参数
+
+不需要自定义行为时可以不配置；有默认值的参数会自动使用默认值。
+
+| 脚本 | 变量 | 敏感 | 格式与默认值 |
+| --- | --- | --- | --- |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTIVITY_COUNT` | 否 | 默认 `3`；范围 `0-3`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_ACTION_DELAY` | 否 | 默认 `2`；范围 `0-30`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_POST_CONTENTS` | 否 | 格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_RANDOM_DELAY_MAX` | 否 | 默认 `0`；范围 `0-3600`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_NOTIFY` | 否 | 默认 `1`；多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_USER_AGENT` | 否 | 多账号格式以该脚本文档为准 |
+| `scripts/cfmoto_checkin.py` | `CFMOTO_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
+| `scripts/smzdm_checkin.js` | `SMZDM_USER_AGENT_APP` | 否 | 多账号格式以该脚本文档为准 |
+| `scripts/smzdm_checkin.js` | `SMZDM_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
+| `scripts/tieba_checkin.py` | `TIEBA_DELAY_MS` | 否 | 默认 `1200`；范围 `500-10000`；多账号格式以该脚本文档为准 |
+| `scripts/tieba_checkin.py` | `TIEBA_VERBOSE` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
+| `scripts/tieba_checkin.py` | `TIEBA_DRY_RUN` | 否 | 默认 `0`；多账号格式以该脚本文档为准 |
 
 多账号统一规则：每行一个账号；需要多个凭据变量时按相同非空行号配对，行数必须一致。
 
@@ -58,94 +67,108 @@
 
 ## 参数获取方法
 
-### `CFMOTO_COOKIE`
+### 必选参数获取（重点）
+
+#### `CFMOTO_COOKIE`
 
 - 所属脚本：`scripts/cfmoto_checkin.py`
 - 获取或设置：使用本人测试账号在 CFMOTO App 执行一次相关请求，从本人控制的本地网络调试记录中复制 Cookie 请求头里的 ticket；如 App 阻止调试，不要绕过安全机制。
 - 填写格式：`ticket=<value> 或裸 ticket；多账号每行一个`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-### `CFMOTO_ACTIVITY_COUNT`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；手工设置互动任务轮数，设为 0 可只签到。
-
-### `CFMOTO_ACTION_DELAY`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；手工设置每个积分动作之间的等待秒数。
-
-### `CFMOTO_POST_CONTENTS`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；按需自行编写公开发帖和评论文案。
-- 填写格式：`多条内容用换行或 | 分隔`
-
-### `CFMOTO_RANDOM_DELAY_MAX`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；手工设置任务启动前的最大随机等待秒数。
-
-### `CFMOTO_NOTIFY`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；设为 0 可关闭 notify.py 通知。
-
-### `CFMOTO_USER_AGENT`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。
-
-### `CFMOTO_DRY_RUN`
-
-- 所属脚本：`scripts/cfmoto_checkin.py`
-- 获取或设置：无需获取；仅预演时手工设为 1。
-
-### `SMZDM_COOKIE`
+#### `SMZDM_COOKIE`
 
 - 所属脚本：`scripts/smzdm_checkin.js`
 - 获取或设置：使用本人测试账号在什么值得买 App 手动签到，从本人控制的本地网络调试记录中筛选 user-api.smzdm.com 的 POST /checkin 请求，复制 Request Headers 中的完整 Cookie。不要绕过证书固定。
 - 填写格式：`完整 Cookie，必须包含 sess=<value>；多账号每行一个`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-### `SMZDM_SK`
+#### `SMZDM_SK`
 
 - 所属脚本：`scripts/smzdm_checkin.js`
 - 获取或设置：在与 SMZDM_COOKIE 相同的 POST /checkin 请求中打开 Payload/Form Data，复制 sk 字段；必须来自同一账号和同一当前 App 会话。
 - 填写格式：`同一 /checkin 请求 Payload 中的 sk 值；多账号每行一个并与 Cookie 按行配对`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-### `SMZDM_USER_AGENT_APP`
-
-- 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：通常无需设置；只有默认值失效时才从同一请求的 User-Agent 请求头复制。
-
-### `SMZDM_DRY_RUN`
-
-- 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
-
-### `TIE_BA_COOKIE`
+#### `TIE_BA_COOKIE`
 
 - 所属脚本：`scripts/tieba_checkin.py`
 - 获取或设置：本人浏览器登录 tieba.baidu.com，打开开发者工具 → Network，选择发往 tieba.baidu.com 的已登录请求并复制完整 Cookie 请求头。
 - 填写格式：`建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
-### `TIEBA_DELAY_MS`
+
+### 可选参数说明
+
+#### `CFMOTO_ACTIVITY_COUNT`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置互动任务轮数，设为 0 可只签到。
+- 默认值：`3`
+
+#### `CFMOTO_ACTION_DELAY`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置每个积分动作之间的等待秒数。
+- 默认值：`2`
+
+#### `CFMOTO_POST_CONTENTS`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；按需自行编写公开发帖和评论文案。
+- 填写格式：`多条内容用换行或 | 分隔`
+
+#### `CFMOTO_RANDOM_DELAY_MAX`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；手工设置任务启动前的最大随机等待秒数。
+- 默认值：`0`
+
+#### `CFMOTO_NOTIFY`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；设为 0 可关闭 notify.py 通知。
+- 默认值：`1`
+
+#### `CFMOTO_USER_AGENT`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：通常无需设置；仅默认 User-Agent 失效时，从同一 CFMOTO App 请求头复制。
+
+#### `CFMOTO_DRY_RUN`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；仅预演时手工设为 1。
+- 默认值：`0`
+
+#### `SMZDM_USER_AGENT_APP`
+
+- 所属脚本：`scripts/smzdm_checkin.js`
+- 获取或设置：通常无需设置；只有默认值失效时才从同一请求的 User-Agent 请求头复制。
+
+#### `SMZDM_DRY_RUN`
+
+- 所属脚本：`scripts/smzdm_checkin.js`
+- 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
+- 默认值：`0`
+
+#### `TIEBA_DELAY_MS`
 
 - 所属脚本：`scripts/tieba_checkin.py`
 - 获取或设置：无需获取；按需填写请求间隔毫秒数，建议保留默认值。
+- 默认值：`1200`
 
-### `TIEBA_VERBOSE`
+#### `TIEBA_VERBOSE`
 
 - 所属脚本：`scripts/tieba_checkin.py`
 - 获取或设置：无需获取；需要详细脱敏日志时手工设为 1。
+- 默认值：`0`
 
-### `TIEBA_DRY_RUN`
+#### `TIEBA_DRY_RUN`
 
 - 所属脚本：`scripts/tieba_checkin.py`
 - 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
+- 默认值：`0`
 
 
 ## 定时任务
