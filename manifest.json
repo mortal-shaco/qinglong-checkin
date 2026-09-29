@@ -9,8 +9,9 @@
   "scripts": [
     {
       "catalogId": "0ba7bb41fd4c339c",
+      "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
-      "sha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
+      "sha256": "a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -106,13 +107,21 @@
       },
       "validation": {
         "status": "passed",
-        "evidence": "projects/checkin/validation/cfmoto"
+        "evidence": "projects/checkin/validation/cfmoto",
+        "candidateSha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809"
+      },
+      "packaging": {
+        "type": "qinglong-discovery-comments",
+        "validatedSha256": "4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809",
+        "releaseSha256": "a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4",
+        "statement": "Only non-executable name/cron comments were added during release staging."
       }
     },
     {
       "catalogId": "621df252c315f2d1",
+      "displayName": "什么值得买签到",
       "path": "scripts/smzdm_checkin.js",
-      "sha256": "9e07aff3f7ec7f23ea6136815950347e171ad794acfc72f350a77d00ec7e61f7",
+      "sha256": "59316df8bbdbacdb2c81ea3add726752053df9df9c03973965fb404ad3293df1",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -184,14 +193,15 @@
       "packaging": {
         "type": "qinglong-discovery-comments",
         "validatedSha256": "c5a0572aba3df812e42ae47206f4af4cbc667a85ff92088040939fa609149b1d",
-        "releaseSha256": "9e07aff3f7ec7f23ea6136815950347e171ad794acfc72f350a77d00ec7e61f7",
+        "releaseSha256": "59316df8bbdbacdb2c81ea3add726752053df9df9c03973965fb404ad3293df1",
         "statement": "Only non-executable name/cron comments were added during release staging."
       }
     },
     {
       "catalogId": "e608052390d250da",
+      "displayName": "百度贴吧签到",
       "path": "scripts/tieba_checkin.py",
-      "sha256": "3f036d614891807c4addc3d096ff9a97a237453344cbd4ddec58438087cb14cb",
+      "sha256": "1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0",
       "stage": "released",
       "license": "GPL-3.0-only",
       "licenseGate": "allowed-copyleft",
@@ -264,7 +274,7 @@
       "packaging": {
         "type": "qinglong-discovery-comments",
         "validatedSha256": "7bd631d96cd54dc946eb361893dcfcc82c32992d3d448d54af8865590cbdcb08",
-        "releaseSha256": "3f036d614891807c4addc3d096ff9a97a237453344cbd4ddec58438087cb14cb",
+        "releaseSha256": "1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0",
         "statement": "Only non-executable name/cron comments were added during release staging."
       }
     }

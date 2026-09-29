@@ -1,4 +1,4 @@
-// name: smzdm checkin
+// name: 什么值得买签到
 // cron: 31 8 * * *
 'use strict';
 

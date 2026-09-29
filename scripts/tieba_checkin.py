@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# name: tieba checkin
+# name: 百度贴吧签到
 # cron: 23 8 * * *
 """Baidu Tieba daily check-in candidate.
 

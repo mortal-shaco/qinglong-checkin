@@ -173,20 +173,20 @@
 
 ## 定时任务
 
-| 脚本 | 青龙命令 | 建议 Cron |
-| --- | --- | --- |
-| `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
-| `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
-| `scripts/smzdm_checkin.js` | `task scripts/smzdm_checkin.js` | `31 8 * * *` |
-| `scripts/tieba_checkin.py` | `python3 scripts/tieba_checkin.py` | `23 8 * * *` |
+| 任务名称 | 脚本 | 青龙命令 | 建议 Cron |
+| --- | --- | --- | --- |
+| 依赖安装 | `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
+| 春风动力签到 | `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
+| 什么值得买签到 | `scripts/smzdm_checkin.js` | `task scripts/smzdm_checkin.js` | `31 8 * * *` |
+| 百度贴吧签到 | `scripts/tieba_checkin.py` | `python3 scripts/tieba_checkin.py` | `23 8 * * *` |
 
 依赖安装任务会读取本仓库的 `requirements.txt`、`package-lock.json` 或 `package.json`；没有额外依赖时安全退出，不会执行远程安装脚本。
 
 ## 验证与兼容性
 
-- `scripts/cfmoto_checkin.py`：SHA-256 `4c68cab004ff15f57972d6056959f605037d75ee578bdb03c5b7fd71231af809`；live 业务成功证据位于 `projects/checkin/validation/cfmoto`。
-- `scripts/smzdm_checkin.js`：SHA-256 `9e07aff3f7ec7f23ea6136815950347e171ad794acfc72f350a77d00ec7e61f7`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
-- `scripts/tieba_checkin.py`：SHA-256 `3f036d614891807c4addc3d096ff9a97a237453344cbd4ddec58438087cb14cb`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
+- `scripts/cfmoto_checkin.py`：SHA-256 `a0045ccd02412e0c8f8860e163e3252cf09fbf5019129053bf26f6f3e1eb8ff4`；live 业务成功证据位于 `projects/checkin/validation/cfmoto`。
+- `scripts/smzdm_checkin.js`：SHA-256 `59316df8bbdbacdb2c81ea3add726752053df9df9c03973965fb404ad3293df1`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
+- `scripts/tieba_checkin.py`：SHA-256 `1f8622816e190aaa12b1220930b763fad3e458b4684b8ad5b645d88e0c108ca0`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
 发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 

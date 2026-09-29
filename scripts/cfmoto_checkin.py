@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# name: 春风动力签到
 """CFMOTO daily points tasks for Qinglong.
 
 cron: 17 8 * * *
