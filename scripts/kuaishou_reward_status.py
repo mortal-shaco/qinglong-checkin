@@ -14,6 +14,8 @@ import os
 import sys
 import urllib.error
 import urllib.request
+import time
+from datetime import datetime
 from pathlib import Path
 
 ENDPOINT = "https://api.kuaishouzt.com/rest/zt/appsupport/yoda/accelerate/info"
@@ -66,20 +68,47 @@ def load_notify_sender():
     return None
 
 
-def notify_summary(body: str, dry_run: bool) -> None:
+def notify_summary(body: str, dry_run: bool) -> str:
     if not notification_enabled():
-        return
+        return "⏭️ 已关闭"
     if dry_run:
-        print(f"快手任务预演总结（不推送）：{body}")
-        return
+        return "⏭️ 预演不推送"
     sender = load_notify_sender()
     if sender is None:
         print("未找到青龙 notify.py，已跳过任务总结推送", file=sys.stderr)
-        return
+        return "⚠️ 未找到通知组件"
     try:
         sender(NOTIFY_TITLE, body)
+        return "✅ 青龙任务总结已推送"
     except Exception:
         print("青龙任务总结推送失败，不改变任务执行结果", file=sys.stderr)
+        return "⚠️ 推送失败"
+
+
+def log_banner(mode: str, total: int) -> None:
+    print("╔════════════════════════════════════════════════════════════╗")
+    print("║                    快手奖励任务                            ║")
+    print("╚════════════════════════════════════════════════════════════╝")
+    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚙️ 运行模式：{mode}")
+    print(f"👥 账号数量：{total}")
+    print("────────────────────────────────────────────────────────────")
+
+
+def log_task_summary(total: int, failed: int, notification: str, started: float, mode: str, status_override: str | None = None) -> None:
+    elapsed = round(time.monotonic() - started, 1)
+    status = status_override or ("dry_run" if mode == "dry-run" and not failed else ("success" if not failed else "partial_failure"))
+    label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分失败"))
+    payload = {"status": status, "mode": mode, "accounts_total": total, "accounts_success": total - failed, "accounts_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
+    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
+    print(f"║ 账号：{total}｜成功 {total - failed}｜失败 {failed}")
+    print(f"║ 子任务：{total}｜成功 {total - failed}｜已完成 0｜跳过 0｜失败 {failed}")
+    print(f"║ 总耗时：{elapsed:.1f} 秒")
+    print(f"║ 通知：{notification}")
+    print("╚══════════════════════════════════════════════════════╝")
+    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚠️ 最终状态：{label}")
+    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
 def accounts() -> list[str]:
@@ -145,29 +174,48 @@ def query(cookie: str) -> dict[str, object]:
 
 
 def main() -> int:
+    started = time.monotonic()
     values = accounts()
     dry_run = enabled(os.environ.get("KUAISHOU_DRY_RUN"))
+    mode = "dry-run" if dry_run else "live"
+    log_banner("预演" if dry_run else "正式执行", len(values))
     if not values:
         emit("fatal", error="KUAISHOU_COOKIE 未配置；多账号必须每行一个")
-        notify_summary("配置失败：KUAISHOU_COOKIE 未配置", dry_run)
+        notification = notify_summary("配置失败：KUAISHOU_COOKIE 未配置", dry_run)
+        log_task_summary(0, 0, notification, started, mode, "configuration_error")
         return 2
     failed = 0
     for index, cookie in enumerate(values, start=1):
+        account_started = time.monotonic()
+        account_ok = False
+        print(f"\n┌─ 账号 {index}/{len(values)}｜账号{index:02d}")
+        print("│\n├─ [1/3] 参数校验")
         try:
             validate_cookie(cookie)
+            print("│  ✅ Cookie 必要字段完整（内容已隐藏）")
+            print("├─ [2/3] 查询奖励状态")
             if dry_run:
+                print("│  ⏭️ 预演模式，未发送网络请求")
                 emit("account", account=index, ok=True, result="dry-run-no-network")
             else:
-                emit("account", account=index, ok=True, result="status-read", status=query(cookie))
+                status = query(cookie)
+                print("│  ✅ 奖励状态读取成功")
+                emit("account", account=index, ok=True, result="status-read", status=status)
+            print("├─ [3/3] 汇总账号结果\n│  ✅ 账号任务完成")
+            account_ok = True
         except (ValueError, RuntimeError, json.JSONDecodeError, urllib.error.URLError, TimeoutError) as error:
             failed += 1
+            print(f"│  ❌ 查询失败：{error}", file=sys.stderr)
             emit("account", account=index, ok=False, error=str(error))
-    mode = "dry-run" if dry_run else "live"
+        print("│")
+        print(f"└─ 账号结果：{'✅ 成功' if account_ok else '❌ 失败'}")
+        print(f"   总任务 1｜成功 {1 if account_ok else 0}｜已完成 0｜跳过 0｜失败 {0 if account_ok else 1}｜用时 {time.monotonic() - account_started:.1f} 秒")
     emit("summary", mode=mode, total=len(values), failed=failed)
-    notify_summary(
+    notification = notify_summary(
         f"模式：{mode}；账号：{len(values)}；成功：{len(values) - failed}；失败：{failed}",
         dry_run,
     )
+    log_task_summary(len(values), failed, notification, started, mode)
     return 1 if failed else 0
 
 

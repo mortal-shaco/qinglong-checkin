@@ -57,10 +57,11 @@
 <tr><td><code>ALIYUN_TOKEN_OUTPUT_FILE</code></td><td>否</td><td>格式：Absolute filesystem path; the file is atomically replaced with mode 0600 and contains one token per line.；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：本地目录路径；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="7"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_ACTIVITY_COUNT</code></td><td>否</td><td>默认 3；范围 0-3；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="8"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_ACTIVITY_COUNT</code></td><td>否</td><td>默认 3；范围 0-3；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_ACTION_DELAY</code></td><td>否</td><td>默认 2；范围 0-30；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_POST_CONTENTS</code></td><td>否</td><td>格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_RANDOM_DELAY_MAX</code></td><td>否</td><td>默认 0；范围 0-3600；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_USER_AGENT</code></td><td>否</td><td>多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
@@ -70,7 +71,8 @@
 <tr><td rowspan="3"><code>scripts/smzdm_checkin.js</code></td><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>SMZDM_USER_AGENT_APP</code></td><td>否</td><td>多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>SMZDM_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="3"><code>scripts/tieba_checkin.py</code></td><td><code>TIEBA_DELAY_MS</code></td><td>否</td><td>默认 1200；范围 500-10000；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="4"><code>scripts/tieba_checkin.py</code></td><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_DELAY_MS</code></td><td>否</td><td>默认 1200；范围 500-10000；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>TIEBA_VERBOSE</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>TIEBA_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
 </tbody>
@@ -186,6 +188,12 @@
 - 获取或设置：无需获取；手工设置任务启动前的最大随机等待秒数。
 - 默认值：`0`
 
+#### `QINGLONG_NOTIFY`
+
+- 所属脚本：`scripts/cfmoto_checkin.py`
+- 获取或设置：无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。
+- 默认值：`1`
+
 #### `CFMOTO_NOTIFY`
 
 - 所属脚本：`scripts/cfmoto_checkin.py`
@@ -238,6 +246,12 @@
 - 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
 - 默认值：`0`
 
+#### `QINGLONG_NOTIFY`
+
+- 所属脚本：`scripts/tieba_checkin.py`
+- 获取或设置：无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。
+- 默认值：`1`
+
 #### `TIEBA_DELAY_MS`
 
 - 所属脚本：`scripts/tieba_checkin.py`
@@ -272,11 +286,11 @@
 
 ## 验证与兼容性
 
-- `scripts/aliyunpan_checkin.py`：SHA-256 `37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
-- `scripts/cfmoto_checkin.py`：SHA-256 `a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
-- `scripts/kuaishou_reward_status.py`：SHA-256 `7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
-- `scripts/smzdm_checkin.js`：SHA-256 `702c2a3123d3a85700d814fd6343a023f78a556761e743d4e61b9cfe29a3c888`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
-- `scripts/tieba_checkin.py`：SHA-256 `77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
+- `scripts/aliyunpan_checkin.py`：SHA-256 `bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
+- `scripts/cfmoto_checkin.py`：SHA-256 `602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
+- `scripts/kuaishou_reward_status.py`：SHA-256 `d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
+- `scripts/smzdm_checkin.js`：SHA-256 `015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
+- `scripts/tieba_checkin.py`：SHA-256 `a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
 发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 

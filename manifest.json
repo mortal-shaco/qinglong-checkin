@@ -11,7 +11,7 @@
       "catalogId": "9c6fa7a75879fa8b",
       "displayName": "阿里云盘签到",
       "path": "scripts/aliyunpan_checkin.py",
-      "sha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+      "sha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -100,15 +100,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/9c6fa7a75879fa8b",
-        "candidateSha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+        "candidateSha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
         "evidenceCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
         "reuseAttestation": {
-          "component": "qinglong-notification",
+          "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T06:36:03.946332+00:00",
-          "reason": "仅补充统一青龙脱敏任务总结通知，不改变阿里云盘业务执行。",
+          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
+          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变阿里云盘业务执行。",
           "fromCandidateSha256": "47804db900a03d1ec6a340a1afa1a435f864a3ba661f08470e9be43804ab2e9f",
-          "toCandidateSha256": "37fcd946f654f7bbdedb69168e6513da070abe812f0145af1176b6ef434645e5",
+          "toCandidateSha256": "bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -120,7 +120,7 @@
       "catalogId": "0ba7bb41fd4c339c",
       "displayName": "春风动力签到",
       "path": "scripts/cfmoto_checkin.py",
-      "sha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
+      "sha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -171,6 +171,13 @@
           "howToGet": "无需获取；手工设置任务启动前的最大随机等待秒数。"
         },
         {
+          "name": "QINGLONG_NOTIFY",
+          "required": false,
+          "sensitive": false,
+          "default": "1",
+          "howToGet": "无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。"
+        },
+        {
           "name": "CFMOTO_NOTIFY",
           "required": false,
           "sensitive": false,
@@ -219,14 +226,27 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/0ba7bb41fd4c339c",
-        "candidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7"
+        "candidateSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+        "evidenceCandidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
+        "reuseAttestation": {
+          "component": "shared-logging",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
+          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变春风动力业务执行。",
+          "fromCandidateSha256": "a3d8c5ec17f1ebc944486943fcf32aff96a146aebb3c576f0a8cab88d11148a7",
+          "toCandidateSha256": "602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
       }
     },
     {
       "catalogId": "ks_cleanroom_v1",
       "displayName": "快手奖励任务",
       "path": "scripts/kuaishou_reward_status.py",
-      "sha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+      "sha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -290,15 +310,15 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/ks_cleanroom_v1",
-        "candidateSha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+        "candidateSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
         "evidenceCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
         "reuseAttestation": {
-          "component": "qinglong-notification",
+          "component": "shared-logging",
           "approvedBy": "mortal-shaco",
-          "approvedAt": "2026-09-29T06:36:03.946332+00:00",
-          "reason": "仅补充统一青龙脱敏任务总结通知，不改变快手只读查询业务。",
+          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
+          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变快手只读查询业务。",
           "fromCandidateSha256": "6cba152a14cdf4c22af418a2419b36132fd8084cd57fc3b4c5736a11b6a0708e",
-          "toCandidateSha256": "7e2d0f8f0fa140c379b388c2f927683bf3efb3b128d03148c475ce55512fd704",
+          "toCandidateSha256": "d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61",
           "businessInterfaceUnchanged": true,
           "parameterParsingUnchanged": true,
           "successCriteriaUnchanged": true,
@@ -310,7 +330,7 @@
       "catalogId": "621df252c315f2d1",
       "displayName": "什么值得买签到",
       "path": "scripts/smzdm_checkin.js",
-      "sha256": "702c2a3123d3a85700d814fd6343a023f78a556761e743d4e61b9cfe29a3c888",
+      "sha256": "015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c",
       "stage": "released",
       "license": "MIT",
       "licenseGate": "allowed-permissive",
@@ -377,12 +397,25 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/621df252c315f2d1",
-        "candidateSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd"
+        "candidateSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
+        "evidenceCandidateSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd",
+        "reuseAttestation": {
+          "component": "shared-logging",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
+          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变什么值得买签到业务执行。",
+          "fromCandidateSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd",
+          "toCandidateSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
       },
       "packaging": {
         "type": "qinglong-discovery-comments",
-        "validatedSha256": "68f47b1dadd65c90cd2153b1c0544ec791e5a01b4e3626ec25d40d35a01a68fd",
-        "releaseSha256": "702c2a3123d3a85700d814fd6343a023f78a556761e743d4e61b9cfe29a3c888",
+        "validatedSha256": "2a10f9d93b6629d92947b678abf208f9ec2aae8c83860588b9c883817269c439",
+        "releaseSha256": "015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c",
         "statement": "Only non-executable name/cron comments were added during release staging."
       }
     },
@@ -390,7 +423,7 @@
       "catalogId": "e608052390d250da",
       "displayName": "百度贴吧签到",
       "path": "scripts/tieba_checkin.py",
-      "sha256": "77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5",
+      "sha256": "a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2",
       "stage": "released",
       "license": "GPL-3.0-only",
       "licenseGate": "allowed-copyleft",
@@ -409,6 +442,13 @@
           "sensitive": true,
           "format": "建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个",
           "howToGet": "本人浏览器登录 tieba.baidu.com，打开开发者工具 → Network，选择发往 tieba.baidu.com 的已登录请求并复制完整 Cookie 请求头。"
+        },
+        {
+          "name": "QINGLONG_NOTIFY",
+          "required": false,
+          "sensitive": false,
+          "default": "1",
+          "howToGet": "无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。"
         },
         {
           "name": "TIEBA_DELAY_MS",
@@ -458,12 +498,25 @@
       "validation": {
         "status": "passed",
         "evidence": "projects/checkin/validation/e608052390d250da",
-        "candidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7"
+        "candidateSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
+        "evidenceCandidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
+        "reuseAttestation": {
+          "component": "shared-logging",
+          "approvedBy": "mortal-shaco",
+          "approvedAt": "2026-09-29T07:12:12.600000+00:00",
+          "reason": "按用户确认的通用模板统一可读日志与脱敏任务统计；仅改变展示和摘要适配，不改变百度贴吧签到业务执行。",
+          "fromCandidateSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
+          "toCandidateSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
+          "businessInterfaceUnchanged": true,
+          "parameterParsingUnchanged": true,
+          "successCriteriaUnchanged": true,
+          "sideEffectsUnchanged": true
+        }
       },
       "packaging": {
         "type": "qinglong-discovery-comments",
-        "validatedSha256": "b0045026a4ec5fda8016e0bb88964461b35ff2f538410e1d05318de3a369ccb7",
-        "releaseSha256": "77f26117b1e9ea21bf44839116760fba2da4eaa5d8dfbf7f975124a3fadef2c5",
+        "validatedSha256": "585454c595c9dfd83454dfc03e3143c7c5e0496d120f89480b4226bbfa437deb",
+        "releaseSha256": "a17ac64822b9f560687198929b373bb81c5857ab8a22ec3272009528a35bb2e2",
         "statement": "Only non-executable name/cron comments were added during release staging."
       }
     }

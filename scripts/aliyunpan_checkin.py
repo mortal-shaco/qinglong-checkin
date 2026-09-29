@@ -35,6 +35,7 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
@@ -90,22 +91,47 @@ def load_notify_sender():
     return None
 
 
-def notify_summary(body: str, dry_run: bool) -> None:
+def notify_summary(body: str, dry_run: bool) -> str:
     if not notification_enabled():
-        print("Notification disabled by QINGLONG_NOTIFY")
-        return
+        return "⏭️ 已关闭"
     if dry_run:
-        print(f"DRY-RUN notification summary (not delivered): {body}")
-        return
+        return "⏭️ 预演不推送"
     sender = load_notify_sender()
     if sender is None:
         print("WARNING: Qinglong notify.py was not found; task status is unchanged", file=sys.stderr)
-        return
+        return "⚠️ 未找到通知组件"
     try:
         sender(NOTIFY_TITLE, body)
-        print("Notification delivered")
+        return "✅ 青龙任务总结已推送"
     except Exception:
         print("WARNING: notification delivery failed; task status is unchanged", file=sys.stderr)
+        return "⚠️ 推送失败"
+
+
+def log_banner(mode: str, account_count: int) -> None:
+    print("╔════════════════════════════════════════════════════════════╗")
+    print("║                    阿里云盘签到任务                        ║")
+    print("╚════════════════════════════════════════════════════════════╝")
+    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚙️ 运行模式：{mode}")
+    print(f"👥 账号数量：{account_count}")
+    print("────────────────────────────────────────────────────────────")
+
+
+def log_task_summary(payload: dict[str, Any], notification: str, started: float) -> None:
+    elapsed = round(time.monotonic() - started, 1)
+    payload = {**payload, "elapsed_seconds": elapsed, "notification": notification}
+    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
+    print(
+        f"║ 账号：{payload['accounts_total']}｜成功 {payload['accounts_success']}｜"
+        f"失败 {payload['accounts_failed']}"
+    )
+    print(f"║ 凭据轮换：{payload.get('tokens_rotated', 0)}｜总耗时：{elapsed:.1f} 秒")
+    print(f"║ 通知：{notification}")
+    print("╚══════════════════════════════════════════════════════╝")
+    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚠️ 最终状态：{payload['status_label']}")
+    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
 def summary_text(event: str, total: int, succeeded: int, failed: int, rotated: int = 0) -> str:
@@ -273,9 +299,10 @@ def persist_tokens(tokens: list[str], destination: str) -> None:
 
 
 def main() -> int:
+    started = time.monotonic()
+    dry_run = enabled("ALIYUN_DRIVE_DRY_RUN")
     try:
         tokens = parse_tokens()
-        dry_run = enabled("ALIYUN_DRIVE_DRY_RUN")
         max_delay = parse_nonnegative_int("ALIYUN_MAX_DELAY_SECONDS")
         persistence_enabled = enabled("ALIYUN_PERSIST_ROTATED_TOKENS")
         output_file = os.getenv("ALIYUN_TOKEN_OUTPUT_FILE", "").strip()
@@ -284,11 +311,14 @@ def main() -> int:
                 "ALIYUN_TOKEN_OUTPUT_FILE is required when rotated-token persistence is enabled"
             )
     except CheckinError as exc:
+        log_banner("预演" if dry_run else "正式执行", 0)
         print(f"CONFIGURATION FAILED: {exc}", file=sys.stderr)
-        notify_summary(summary_text("configuration-error", 0, 0, 0), enabled("ALIYUN_DRIVE_DRY_RUN"))
+        body = summary_text("configuration-error", 0, 0, 0)
+        notification = notify_summary(body, dry_run)
+        log_task_summary({"status": "configuration_error", "status_label": "配置失败", "accounts_total": 0, "accounts_success": 0, "accounts_failed": 0, "tokens_rotated": 0}, notification, started)
         return 2
 
-    print(f"Aliyun Drive check-in: {len(tokens)} account(s)")
+    log_banner("预演" if dry_run else "正式执行", len(tokens))
     if dry_run:
         print("DRY-RUN: HTTP requests, delays, and token persistence are disabled")
     elif max_delay:
@@ -298,17 +328,24 @@ def main() -> int:
 
     results: list[AccountResult] = []
     for index, token in enumerate(tokens, start=1):
-        print(f"Account {index}: starting")
+        account_started = time.monotonic()
+        print(f"\n┌─ 账号 {index}/{len(tokens)}｜账号{index:02d}")
+        print("│\n├─ [1/3] 参数校验\n│  ✅ Refresh Token 已配置（内容已隐藏）")
+        print("├─ [2/3] 刷新登录凭据\n│  ⏳ 正在处理")
         result = AliyunDriveClient(token, dry_run).run()
         results.append(result)
         if result.success:
-            print(f"Account {index}: CHECK-IN SUCCESS (day count {result.sign_days})")
+            print("│  ✅ 登录凭据有效")
+            print(f"├─ [3/3] 执行签到\n│  ✅ 签到成功，累计 {result.sign_days} 天")
             if result.rotated:
-                print(f"Account {index}: refresh token rotated (value not displayed)")
+                print("│  ☑️ Refresh Token 已轮换（内容已隐藏）")
         else:
-            print(f"Account {index}: FAILED: {result.error}", file=sys.stderr)
+            print(f"│  ❌ 执行失败：{result.error}", file=sys.stderr)
             if result.rotated:
-                print(f"Account {index}: refresh token rotated (value not displayed)")
+                print("│  ☑️ Refresh Token 已轮换（内容已隐藏）")
+        print("│")
+        print(f"└─ 账号结果：{'✅ 成功' if result.success else '❌ 失败'}")
+        print(f"   总任务 1｜成功 {1 if result.success else 0}｜已完成 0｜跳过 0｜失败 {0 if result.success else 1}｜用时 {time.monotonic() - account_started:.1f} 秒")
 
     failures = sum(not result.success for result in results)
     rotated = any(result.rotated for result in results)
@@ -331,7 +368,8 @@ def main() -> int:
             failures,
             sum(result.rotated for result in results),
         )
-        notify_summary(body, dry_run)
+        notification = notify_summary(body, dry_run)
+        log_task_summary({"status": "partial_failure" if succeeded else "failure", "status_label": "部分失败" if succeeded else "失败", "accounts_total": len(results), "accounts_success": succeeded, "accounts_failed": failures, "tokens_rotated": sum(result.rotated for result in results)}, notification, started)
         print(f"RUN FAILED: {failures} failure(s)", file=sys.stderr)
         return 1
     if dry_run:
@@ -345,7 +383,8 @@ def main() -> int:
         0,
         sum(result.rotated for result in results),
     )
-    notify_summary(body, dry_run)
+    notification = notify_summary(body, dry_run)
+    log_task_summary({"status": "dry_run" if dry_run else "success", "status_label": "预演通过" if dry_run else "全部成功", "accounts_total": len(results), "accounts_success": len(results), "accounts_failed": 0, "tokens_rotated": sum(result.rotated for result in results)}, notification, started)
     return 0
 
 

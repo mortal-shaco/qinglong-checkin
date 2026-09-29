@@ -18,6 +18,7 @@ Environment:
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 import random
 import re
@@ -26,6 +27,8 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -196,17 +199,73 @@ def like(ticket: str, post_id: str) -> Result:
     return Result(False, f"点赞失败：{error}") if error else parse_response(payload, "点赞")
 
 
-def notify(summary: str) -> None:
-    if not enabled("CFMOTO_NOTIFY", default=True):
-        return
+def notify(summary: str) -> str:
+    if not enabled("QINGLONG_NOTIFY", default=True) or not enabled("CFMOTO_NOTIFY", default=True):
+        return "⏭️ 已关闭"
+    sender = None
     try:
-        from notify import send  # type: ignore
+        from notify import send as sender  # type: ignore
     except ImportError:
-        return
+        search_roots = [
+            os.getenv("QINGLONG_NOTIFY_DIR", ""),
+            "/ql/data/scripts",
+            "/ql/scripts",
+            str(Path.cwd()),
+        ]
+        for root in filter(None, search_roots):
+            notify_path = Path(root) / "notify.py"
+            if not notify_path.is_file():
+                continue
+            spec = importlib.util.spec_from_file_location("qinglong_notify", notify_path)
+            if spec and spec.loader:
+                try:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    sender = getattr(module, "send", None)
+                    if callable(sender):
+                        break
+                except Exception:
+                    continue
+    if not callable(sender):
+        print(f"[{NAME}] 未找到青龙 notify.py，已跳过任务总结推送。", file=sys.stderr)
+        return "⚠️ 未找到通知组件"
     try:
-        send(NAME, summary)
+        sender(NAME, summary)
+        return "✅ 青龙任务总结已推送"
     except Exception as error:  # Notifications must not change the task result.
         print(f"[{NAME}] 通知发送失败：{type(error).__name__}", file=sys.stderr)
+        return "⚠️ 推送失败"
+
+
+def log_banner(mode: str, total: int) -> None:
+    print("╔════════════════════════════════════════════════════════════╗")
+    print("║                    春风动力签到任务                        ║")
+    print("╚════════════════════════════════════════════════════════════╝")
+    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚙️ 运行模式：{mode}")
+    print(f"👥 账号数量：{total}")
+    print("────────────────────────────────────────────────────────────")
+
+
+def log_task_summary(account_results: list[list[Result]], notification: str, started: float, dry_run: bool, status_override: str | None = None) -> None:
+    total = sum(len(items) for items in account_results)
+    succeeded = sum(result.ok and not result.already_done for items in account_results for result in items)
+    completed = sum(result.already_done for items in account_results for result in items)
+    failed = sum(not result.ok for items in account_results for result in items)
+    account_failed = sum(any(not result.ok for result in items) for items in account_results)
+    elapsed = round(time.monotonic() - started, 1)
+    status = status_override or ("dry_run" if dry_run and not failed else ("success" if not failed else "partial_failure"))
+    label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分成功"))
+    payload = {"status": status, "mode": "dry-run" if dry_run else "live", "accounts_total": len(account_results), "accounts_success": len(account_results) - account_failed, "accounts_partial_or_failed": account_failed, "tasks_total": total, "tasks_success": succeeded, "tasks_already_complete": completed, "tasks_skipped": 0, "tasks_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
+    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
+    print(f"║ 账号：{len(account_results)}｜成功 {len(account_results) - account_failed}｜部分/失败 {account_failed}")
+    print(f"║ 子任务：{total}｜成功 {succeeded}｜已完成 {completed}｜跳过 0｜失败 {failed}")
+    print(f"║ 总耗时：{elapsed:.1f} 秒")
+    print(f"║ 通知：{notification}")
+    print("╚══════════════════════════════════════════════════════╝")
+    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚠️ 最终状态：{label}")
+    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
 def configured_delay() -> int:
@@ -283,22 +342,25 @@ def fetch_random_text(timeout: float = 8.0) -> tuple[str | None, str | None]:
 def activity_content(fallbacks: list[str], action: str, account_index: int) -> str:
     remote, error = fetch_random_text()
     if remote:
-        print(f"[账号 {account_index}] {action}使用接口随机文案。")
+        print(f"│  ✅ {action}使用接口随机文案")
         return remote
     fallback = random.choice(fallbacks)
-    print(f"[账号 {account_index}] 文案接口不可用（{error or '未知错误'}），{action}使用本地兜底文案。")
+    print(f"│  ⚠️ 文案接口不可用（{error or '未知错误'}），{action}使用本地兜底文案")
     return fallback
 
 
 def show(index: int, result: Result) -> None:
-    icon = "✓" if result.ok else "✗"
-    print(f"[账号 {index}] {icon} {result.message}")
+    icon = "☑️" if result.already_done else ("✅" if result.ok else "❌")
+    print(f"│  {icon} {result.message}")
 
 
 def run_account(ticket: str, index: int, activity_count: int, action_delay: int) -> list[Result]:
+    print("│\n├─ [1/4] 参数校验\n│  ✅ ticket 字段有效（内容已隐藏）")
+    print("├─ [2/4] 每日签到")
     results = [request_task(ticket, 8, "签到")]
     show(index, results[-1])
     contents = post_contents()
+    print(f"├─ [3/4] 社区互动\n│  ⏳ 计划执行 {activity_count} 轮发帖、评论和点赞")
 
     for round_index in range(activity_count):
         if action_delay:
@@ -332,13 +394,19 @@ def run_account(ticket: str, index: int, activity_count: int, action_delay: int)
         results.append(share_result)
         show(index, share_result)
 
+    print("├─ [4/4] 汇总账号结果\n│  ✅ 全部动作已处理")
     return results
 
 
 def main() -> int:
+    started = time.monotonic()
     accounts = parse_accounts(os.getenv("CFMOTO_COOKIE", ""))
     if not accounts:
-        print(f"[{NAME}] 缺少 CFMOTO_COOKIE。请填写 ticket 值或包含 ticket 的完整 Cookie。", file=sys.stderr)
+        log_banner("正式执行", 0)
+        message = "配置失败：缺少 CFMOTO_COOKIE。请填写 ticket 值或包含 ticket 的完整 Cookie。"
+        print(f"[{NAME}] {message}", file=sys.stderr)
+        notification = notify(message)
+        log_task_summary([], notification, started, False, "configuration_error")
         return 2
 
     dry_run = enabled("CFMOTO_DRY_RUN")
@@ -350,26 +418,40 @@ def main() -> int:
         )
         action_delay = bounded_number("CFMOTO_ACTION_DELAY", 2, 0, 30)
     except ValueError as error:
-        print(f"[{NAME}] 配置错误：{error}", file=sys.stderr)
+        log_banner("预演" if dry_run else "正式执行", len(accounts))
+        message = f"配置错误：{error}"
+        print(f"[{NAME}] {message}", file=sys.stderr)
+        notification = notify(message)
+        log_task_summary([], notification, started, dry_run, "configuration_error")
         return 2
 
-    print(
-        f"[{NAME}] 共 {len(tickets)} 个账号；模式：{'预演' if dry_run else '正式执行'}；"
-        f"互动任务 {activity_count}/{MAX_DAILY_ACTIVITIES} 轮。"
-    )
+    log_banner("预演" if dry_run else "正式执行", len(tickets))
+    print(f"🧩 互动任务：{activity_count}/{MAX_DAILY_ACTIVITIES} 轮")
     if delay:
         print(f"[{NAME}] 随机延迟 {delay} 秒。")
         time.sleep(delay)
 
     account_results: list[list[Result]] = []
     for index, ticket in enumerate(tickets, 1):
+        account_started = time.monotonic()
+        print(f"\n┌─ 账号 {index}/{len(tickets)}｜账号{index:02d}")
         if dry_run:
             planned = 1 + activity_count * 4
+            print("│\n├─ [1/4] 参数校验\n│  ✅ ticket 字段有效（内容已隐藏）")
+            print("├─ [2/4] 每日签到\n│  ⏭️ 预演未发送请求")
+            print(f"├─ [3/4] 社区互动\n│  ⏭️ 计划 {planned - 1} 个互动请求，未发送")
+            print("├─ [4/4] 汇总账号结果")
             results = [Result(True, f"预演完成，计划 {planned} 个请求，未发送任何请求")]
             show(index, results[0])
         else:
             results = run_account(ticket, index, activity_count, action_delay)
         account_results.append(results)
+        failed = sum(not item.ok for item in results)
+        success = sum(item.ok and not item.already_done for item in results)
+        completed = sum(item.already_done for item in results)
+        print("│")
+        print(f"└─ 账号结果：{'✅ 成功' if not failed else '⚠️ 部分成功' if success or completed else '❌ 失败'}")
+        print(f"   总任务 {len(results)}｜成功 {success}｜已完成 {completed}｜跳过 0｜失败 {failed}｜用时 {time.monotonic() - account_started:.1f} 秒")
 
     succeeded_accounts = sum(all(result.ok for result in results) for results in account_results)
     failed_accounts = len(account_results) - succeeded_accounts
@@ -378,7 +460,8 @@ def main() -> int:
         f"存在失败 {failed_accounts} 个"
     )
     print(f"[{NAME}] 汇总：{summary}。")
-    notify(summary)
+    notification = notify(summary)
+    log_task_summary(account_results, notification, started, dry_run)
     return 0 if failed_accounts == 0 else 1
 
 

@@ -10,6 +10,7 @@ Derived from sudojia/AutoTaskScript src/web/sudojia_tieba.js.
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 import re
 import sys
@@ -17,6 +18,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+from datetime import datetime
 from typing import Any
 
 
@@ -41,6 +44,79 @@ OPENER = urllib.request.build_opener(HttpsOnlyRedirectHandler())
 
 def enabled(name: str) -> bool:
     return bool(re.fullmatch(r"1|true|yes|on", os.environ.get(name, ""), re.IGNORECASE))
+
+
+def notification_enabled() -> bool:
+    value = os.environ.get("QINGLONG_NOTIFY")
+    return value is None or bool(re.fullmatch(r"1|true|yes|on", value, re.IGNORECASE))
+
+
+def notify(summary: str) -> str:
+    if not notification_enabled():
+        return "⏭️ 已关闭"
+    sender = None
+    try:
+        from notify import send as sender  # type: ignore
+    except ImportError:
+        search_roots = [
+            os.getenv("QINGLONG_NOTIFY_DIR", ""),
+            "/ql/data/scripts",
+            "/ql/scripts",
+            str(Path.cwd()),
+        ]
+        for root in filter(None, search_roots):
+            notify_path = Path(root) / "notify.py"
+            if not notify_path.is_file():
+                continue
+            spec = importlib.util.spec_from_file_location("qinglong_notify", notify_path)
+            if spec and spec.loader:
+                try:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    sender = getattr(module, "send", None)
+                    if callable(sender):
+                        break
+                except Exception:
+                    continue
+    if not callable(sender):
+        print(f"[{NAME}] 未找到青龙 notify.py，已跳过任务总结推送。", file=sys.stderr)
+        return "⚠️ 未找到通知组件"
+    try:
+        sender(NAME, summary)
+        return "✅ 青龙任务总结已推送"
+    except Exception as error:
+        print(f"[{NAME}] 通知发送失败：{type(error).__name__}", file=sys.stderr)
+        return "⚠️ 推送失败"
+
+
+def log_banner(mode: str, total: int) -> None:
+    print("╔════════════════════════════════════════════════════════════╗")
+    print("║                    百度贴吧签到任务                        ║")
+    print("╚════════════════════════════════════════════════════════════╝")
+    print(f"🕐 开始时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚙️ 运行模式：{mode}")
+    print(f"👥 账号数量：{total}")
+    print("────────────────────────────────────────────────────────────")
+
+
+def log_task_summary(results: list[dict[str, int]], notification: str, started: float, dry_run: bool, status_override: str | None = None) -> None:
+    total = sum(item["total"] for item in results)
+    signed = sum(item["signed"] for item in results)
+    failed = sum(item["failed"] for item in results)
+    account_failed = sum(item["failed"] > 0 for item in results)
+    elapsed = round(time.monotonic() - started, 1)
+    status = status_override or ("dry_run" if dry_run and not failed else ("success" if not failed else "partial_failure"))
+    label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分失败"))
+    payload = {"status": status, "mode": "dry-run" if dry_run else "live", "accounts_total": len(results), "accounts_success": len(results) - account_failed, "accounts_failed": account_failed, "tasks_total": total, "tasks_success_or_complete": signed, "tasks_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
+    print("\n╔══════════════════════ 任务统计 ══════════════════════╗")
+    print(f"║ 账号：{len(results)}｜成功 {len(results) - account_failed}｜失败 {account_failed}")
+    print(f"║ 子任务：{total}｜成功/已完成 {signed}｜跳过 0｜失败 {failed}")
+    print(f"║ 总耗时：{elapsed:.1f} 秒")
+    print(f"║ 通知：{notification}")
+    print("╚══════════════════════════════════════════════════════╝")
+    print(f"🏁 完成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⚠️ 最终状态：{label}")
+    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
 def parse_accounts(value: str | None) -> list[str]:
@@ -120,17 +196,20 @@ def sign_forum(headers: dict[str, str], tbs: str, name: str) -> tuple[bool, str]
 def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_seconds: float) -> dict[str, int]:
     prefix = f"账号 {index}"
     headers = account_headers(cookie)
-    print(f"\n[{prefix}] 正在验证 Cookie 并读取关注贴吧…")
+    print("│\n├─ [1/4] 参数校验\n│  ✅ Cookie 必要字段完整（内容已隐藏）")
+    print("├─ [2/4] 登录验证\n│  ⏳ 正在验证 Cookie")
     tbs, forums = get_session(headers)
+    print("│  ✅ 登录状态有效")
     signed = [forum for forum in forums if forum["signed"]]
     pending = [forum for forum in forums if not forum["signed"]]
-    print(f"[{prefix}] 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个。")
+    print(f"├─ [3/4] 获取任务\n│  ✅ 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个")
     if verbose and pending:
         print(f"[{prefix}] 待签到：{'、'.join(str(forum['name']) for forum in pending)}")
     if dry_run:
-        print(f"[{prefix}] 预演模式：未发送签到请求。")
+        print("├─ [4/4] 执行任务\n│  ⏭️ 预演模式，未发送签到请求")
         return {"total": len(forums), "signed": len(signed), "failed": 0}
 
+    print("├─ [4/4] 执行任务")
     success = len(signed)
     failures = 0
     for position, forum in enumerate(pending, 1):
@@ -139,25 +218,29 @@ def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_sec
             if ok:
                 success += 1
                 if verbose:
-                    print(f"[{prefix}] ✓ {forum['name']}")
+                    print(f"│  ✅ {forum['name']}")
             else:
                 failures += 1
                 detail = f"：{forum['name']}（{message}）" if verbose else ""
-                print(f"[{prefix}] ✗ 第 {position}/{len(pending)} 项签到失败{detail}", file=sys.stderr)
+                print(f"│  ❌ 第 {position}/{len(pending)} 项签到失败{detail}", file=sys.stderr)
         except Exception as error:  # Continue so the aggregate result remains complete.
             failures += 1
             detail = f"：{forum['name']}（{error}）" if verbose else ""
-            print(f"[{prefix}] ✗ 第 {position}/{len(pending)} 项请求异常{detail}", file=sys.stderr)
+            print(f"│  ❌ 第 {position}/{len(pending)} 项请求异常{detail}", file=sys.stderr)
         if position < len(pending):
             time.sleep(delay_seconds)
-    print(f"[{prefix}] 完成：成功/已签到 {success} 个，失败 {failures} 个。")
     return {"total": len(forums), "signed": success, "failed": failures}
 
 
 def main() -> int:
+    started = time.monotonic()
     accounts = parse_accounts(os.environ.get("TIEBA_COOKIE") or os.environ.get("TIE_BA_COOKIE"))
     if not accounts:
-        print(f"[{NAME}] 缺少 TIEBA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号使用换行分隔。", file=sys.stderr)
+        log_banner("正式执行", 0)
+        message = "配置失败：缺少 TIEBA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号使用换行分隔。"
+        print(f"[{NAME}] {message}", file=sys.stderr)
+        notification = notify(message)
+        log_task_summary([], notification, started, False, "configuration_error")
         return 2
     dry_run = enabled("TIEBA_DRY_RUN")
     verbose = enabled("TIEBA_VERBOSE")
@@ -165,19 +248,28 @@ def main() -> int:
         delay_ms = min(10_000, max(500, int(os.environ.get("TIEBA_DELAY_MS", "1200"))))
     except ValueError:
         delay_ms = 1200
-    print(f"[{NAME}] 开始，共 {len(accounts)} 个账号；模式：{'预演' if dry_run else '正式签到'}。")
+    log_banner("预演" if dry_run else "正式签到", len(accounts))
 
     results: list[dict[str, int]] = []
     for index, cookie in enumerate(accounts, 1):
+        account_started = time.monotonic()
+        print(f"\n┌─ 账号 {index}/{len(accounts)}｜账号{index:02d}")
         try:
-            results.append(run_account(cookie, index, dry_run, verbose, delay_ms / 1000))
+            result = run_account(cookie, index, dry_run, verbose, delay_ms / 1000)
         except Exception as error:
-            print(f"[账号 {index}] 失败：{error}", file=sys.stderr)
-            results.append({"total": 0, "signed": 0, "failed": 1})
+            print(f"│  ❌ 账号执行失败：{error}", file=sys.stderr)
+            result = {"total": 0, "signed": 0, "failed": 1}
+        results.append(result)
+        print("│")
+        print(f"└─ 账号结果：{'✅ 成功' if result['failed'] == 0 else '⚠️ 部分成功' if result['signed'] else '❌ 失败'}")
+        print(f"   总任务 {result['total']}｜成功/已完成 {result['signed']}｜跳过 0｜失败 {result['failed']}｜用时 {time.monotonic() - account_started:.1f} 秒")
     total = sum(item["total"] for item in results)
     signed = sum(item["signed"] for item in results)
     failed = sum(item["failed"] for item in results)
-    print(f"\n[{NAME}] 汇总：{len(accounts)} 个账号，{total} 个贴吧，成功/已签到 {signed} 个，失败 {failed} 个。")
+    summary = f"{len(accounts)} 个账号，{total} 个贴吧，成功/已签到 {signed} 个，失败 {failed} 个"
+    print(f"\n[{NAME}] 汇总：{summary}。")
+    notification = notify(summary)
+    log_task_summary(results, notification, started, dry_run)
     return 1 if failed else 0
 
 
