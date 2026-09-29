@@ -1,0 +1,6 @@
+[stdout]
+{"status":"success","mode":"live","accounts":1,"successful":1,"failed":0,"results":[{"account":1,"success":true,"signin":"already completed","question":"already completed","profile":{"username":"u***n","level":9,"growth":99918,"membership":"standard"},"errors":[]}]}
+BAIDUWANGPAN_ALL_ACCOUNTS_OK
+
+[stderr]
+QINGLONG_NOTIFY_UNAVAILABLE

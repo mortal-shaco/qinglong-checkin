@@ -37,6 +37,7 @@
 <thead><tr><th>脚本</th><th>变量</th><th>敏感</th><th>填写格式</th></tr></thead>
 <tbody>
 <tr><td rowspan="1"><code>scripts/aliyunpan_checkin.py</code></td><td><code>ALIYUN_REFRESH_TOKEN</code></td><td>是</td><td>格式：One non-empty refresh token per line; blank lines are ignored.；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="1"><code>scripts/baiduwangpan_checkin.py</code></td><td><code>BAIDU_COOKIE</code></td><td>是</td><td>格式：每个账号一个非空行；每行是包含 key=value 的完整 Cookie 请求头；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_COOKIE</code></td><td>是</td><td>格式：ticket=&lt;value&gt; 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/kuaishou_reward_status.py</code></td><td><code>KUAISHOU_COOKIE</code></td><td>是</td><td>格式：每个账号一行完整 Cookie；每行至少包含 kuaishou.api_st=...；不使用 &amp; 或 @ 分隔；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_ACCOUNT</code></td><td>是</td><td>格式：每行一个账号：sk|完整Cookie；Cookie 必须包含 sess=&lt;value&gt;；多账号格式以该脚本文档为准</td></tr>
@@ -57,6 +58,10 @@
 <tr><td><code>ALIYUN_TOKEN_OUTPUT_FILE</code></td><td>否</td><td>格式：Absolute filesystem path; the file is atomically replaced with mode 0600 and contains one token per line.；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：本地目录路径；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="4"><code>scripts/baiduwangpan_checkin.py</code></td><td><code>BAIDUWANGPAN_DRY_RUN</code></td><td>否</td><td>格式：1/true/yes/on 启用；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>BAIDUWANGPAN_DELAY_MAX</code></td><td>否</td><td>格式：非负整数；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>格式：1/0 或常见布尔值；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：包含 notify.py 的目录路径；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="8"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_ACTIVITY_COUNT</code></td><td>否</td><td>默认 3；范围 0-3；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_ACTION_DELAY</code></td><td>否</td><td>默认 2；范围 0-30；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>CFMOTO_POST_CONTENTS</code></td><td>否</td><td>格式：多条内容用换行或 | 分隔；多账号格式以该脚本文档为准</td></tr>
@@ -81,6 +86,7 @@
 多账号统一规则：每行一个账号；需要多个凭据变量时按相同非空行号配对，行数必须一致。
 
 - `scripts/aliyunpan_checkin.py`：ALIYUN_REFRESH_TOKEN uses one non-empty account per line; blank lines are ignored and every account is processed independently.。
+- `scripts/baiduwangpan_checkin.py`：BAIDU_COOKIE 中每个非空行是一个独立账号；依次处理，任一账号失败时进程整体非零退出。。
 - `scripts/cfmoto_checkin.py`：CFMOTO_COOKIE 每行一个账号。
 - `scripts/kuaishou_reward_status.py`：KUAISHOU_COOKIE 每个非空行对应一个账号；任一账号失败时任务整体非零退出。
 - `scripts/smzdm_checkin.js`：SMZDM_ACCOUNT 每个非空行对应一个账号，行内格式为 sk|完整Cookie；账号之间只使用换行。
@@ -95,6 +101,13 @@
 - 所属脚本：`scripts/aliyunpan_checkin.py`
 - 获取或设置：Sign in to the Aliyun Drive web application and copy the refresh_token value from its authenticated browser storage. Never share it.
 - 填写格式：`One non-empty refresh token per line; blank lines are ignored.`
+- 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
+
+#### `BAIDU_COOKIE`
+
+- 所属脚本：`scripts/baiduwangpan_checkin.py`
+- 获取或设置：登录 https://pan.baidu.com/ 后打开浏览器开发者工具的 Network 面板，刷新页面，选择一个 pan.baidu.com 请求，复制 Request Headers 中完整的 Cookie 值。
+- 填写格式：`每个账号一个非空行；每行是包含 key=value 的完整 Cookie 请求头`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
 #### `CFMOTO_COOKIE`
@@ -163,6 +176,30 @@
 - 所属脚本：`scripts/aliyunpan_checkin.py`
 - 获取或设置：仅当 notify.py 不在青龙标准路径时，填写其所在目录。
 - 填写格式：`本地目录路径`
+
+#### `BAIDUWANGPAN_DRY_RUN`
+
+- 所属脚本：`scripts/baiduwangpan_checkin.py`
+- 获取或设置：设为 1 可仅验证配置，不访问网络且不改变账号状态。
+- 填写格式：`1/true/yes/on 启用`
+
+#### `BAIDUWANGPAN_DELAY_MAX`
+
+- 所属脚本：`scripts/baiduwangpan_checkin.py`
+- 获取或设置：可选的账号间最大随机等待秒数，默认 0（不等待）。
+- 填写格式：`非负整数`
+
+#### `QINGLONG_NOTIFY`
+
+- 所属脚本：`scripts/baiduwangpan_checkin.py`
+- 获取或设置：青龙全局通知开关，默认启用；设为 0、false、no 或 off 可禁用。
+- 填写格式：`1/0 或常见布尔值`
+
+#### `QINGLONG_NOTIFY_DIR`
+
+- 所属脚本：`scripts/baiduwangpan_checkin.py`
+- 获取或设置：如青龙 notify.py 不在标准位置，可设为其所在目录。
+- 填写格式：`包含 notify.py 的目录路径`
 
 #### `CFMOTO_ACTIVITY_COUNT`
 
@@ -277,6 +314,7 @@
 | --- | --- | --- | --- |
 | 依赖安装 | `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
 | 阿里云盘签到 | `scripts/aliyunpan_checkin.py` | `python3 scripts/aliyunpan_checkin.py` | `3 11 * * *` |
+| baiduwangpan checkin | `scripts/baiduwangpan_checkin.py` | `python3 scripts/baiduwangpan_checkin.py` | `0 9 * * *` |
 | 春风动力签到 | `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
 | 快手奖励任务 | `scripts/kuaishou_reward_status.py` | `python3 scripts/kuaishou_reward_status.py` | `38 8,14,20 * * *` |
 | 什么值得买签到 | `scripts/smzdm_checkin.js` | `task scripts/smzdm_checkin.js` | `31 8 * * *` |
@@ -287,6 +325,7 @@
 ## 验证与兼容性
 
 - `scripts/aliyunpan_checkin.py`：SHA-256 `bc60a13cd0ed5cd937b8c433ca70ca2eaca06bb446117f08c924be14c9643db7`；live 业务成功证据位于 `projects/checkin/validation/9c6fa7a75879fa8b`。
+- `scripts/baiduwangpan_checkin.py`：SHA-256 `62f7ef25d8af43f989a7b654931ecda2bedf743019859996ae3d7861a9534612`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
 - `scripts/cfmoto_checkin.py`：SHA-256 `602967871fc70415f0ddc688a73acf1dadffc0ecfbefff418f6f6d4fcdad700f`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
 - `scripts/kuaishou_reward_status.py`：SHA-256 `d024209a3e5b4b3359cc6f7c997fc2f56f237f0655e6fc5e9ae6c8b56c000f61`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
 - `scripts/smzdm_checkin.js`：SHA-256 `015398e46c86cb7773e144a83d1df44825c92a9707c4c468a635e08bac9b6d8c`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
@@ -297,6 +336,7 @@
 ## 副作用与风险
 
 - `scripts/aliyunpan_checkin.py`：Performs an Aliyun Drive membership check-in for each account during live runs；Refreshes each account access token and may rotate its refresh token during live runs；When explicitly enabled, atomically writes current refresh tokens to the configured local file。
+- `scripts/baiduwangpan_checkin.py`：为每个已配置的百度网盘账号执行每日会员签到；为每个已配置的百度网盘账号提交每日会员问题答案；在通知开启且青龙通知模块可用时发送一条脱敏任务汇总通知。
 - `scripts/cfmoto_checkin.py`：改变账号的当日签到和积分状态；最多发布三个公开帖子并留下可见内容；最多产生三次公开评论、三次点赞和三次分享任务记录；发帖和评论前访问第三方一言接口获取公开随机文本，不发送春风动力账号凭据。
 - `scripts/kuaishou_reward_status.py`：。
 - `scripts/smzdm_checkin.js`：改变什么值得买账号的当日签到与连续签到状态；满足条件时领取奖励并改变账号奖励状态。
@@ -305,6 +345,7 @@
 ## 脚本功能
 
 - `scripts/aliyunpan_checkin.py`：Daily Aliyun Drive membership check-in with explicit response validation；Independent newline-delimited multi-account processing with aggregate exit status；Network-free deterministic dry-run simulation；Refresh-token rotation detection with optional secure file persistence。
+- `scripts/baiduwangpan_checkin.py`：每日百度网盘会员签到，明确验证积分或已完成状态；获取并提交每日会员成长问题答案；读取并报告脱敏用户名、会员等级、成长值和会员类型；逐行多账号独立处理与结构化 JSON 汇总；完全断网的配置预演；成功、部分失败、失败、配置错误和预演状态的青龙脱敏汇总通知。
 - `scripts/cfmoto_checkin.py`：执行每日签到；发帖和评论优先使用接口随机文本，返回出处时拼接作者与作品信息，接口异常时使用本地文案兜底；按配置发布帖子、评论、点赞并完成分享积分任务。
 - `scripts/kuaishou_reward_status.py`：只读查询快手收益与任务状态；按白名单输出非敏感状态字段；换行多账号独立执行并汇总。
 - `scripts/smzdm_checkin.js`：查询账号签到状态与连续签到奖励；执行每日签到；满足条件时领取额外奖励。
@@ -317,6 +358,7 @@
 仓库发布许可证：`GPL-3.0-only`。每个脚本仍保留准确来源：
 
 - `scripts/aliyunpan_checkin.py`：上游 `agluo/ql-script-hub` / `aliyunpan_checkin.py` / `a8d39b97cb22c3ac657089014df754342b456ff6`。
+- `scripts/baiduwangpan_checkin.py`：上游 `agluo/ql-script-hub` / `baiduwangpan_checkin.py` / `a8d39b97cb22c3ac657089014df754342b456ff6`。
 - `scripts/cfmoto_checkin.py`：作者自有来源 `shaco_autowork/cf_sign.py`。
 - `scripts/kuaishou_reward_status.py`：洁净室独立实现 `candidates/ks_cleanroom_v1/kuaishou_reward_status.py`；行为规格 `specs/kuaishou-reward-status.md`；隔离证据 `reviews/clean-room/kuaishou-reward-status.md`。
 - `scripts/smzdm_checkin.js`：上游 `ump45nose/smzdm-checkin-ql` / `checkin.js` / `6b9eaced964c348efb46d2c13a45ab5c66caaea8`。
