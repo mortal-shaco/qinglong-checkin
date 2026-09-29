@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "e608052390d250da",
+  "candidateSha256": "7bd631d96cd54dc946eb361893dcfcc82c32992d3d448d54af8865590cbdcb08",
+  "source": {
+    "repository": "sudojia/AutoTaskScript",
+    "branch": "script",
+    "commit": "4a55327baed0321bdf95802a75cc8363cae118b0",
+    "path": "src/web/sudojia_tieba.js",
+    "sha256": "26fa12b3fb1cacad85e936bd8b7fe02d75c53289540a9ca04f6c058abba1bbc3"
+  },
+  "testedAt": "2026-09-29T01:13:32.396584+00:00",
+  "finishedAt": "2026-09-29T01:13:32.700741+00:00",
+  "mode": "live",
+  "runner": "local-sandbox-validator",
+  "runtime": {
+    "command": "python3.14"
+  },
+  "accountType": "local-user-configured",
+  "exitCode": 0,
+  "timedOut": false,
+  "businessResult": "success",
+  "sideEffectsObserved": [
+    "向百度贴吧提交签到请求并改变对应贴吧的当日签到状态"
+  ],
+  "log": "redacted.log"
+}
