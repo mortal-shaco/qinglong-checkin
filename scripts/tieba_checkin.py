@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # name: 百度贴吧签到
 # cron: 23 8 * * *
-"""Baidu Tieba daily check-in candidate.
+"""百度贴吧每日签到（青龙维护版）。
 
 SPDX-License-Identifier: GPL-3.0-only
 Derived from sudojia/AutoTaskScript src/web/sudojia_tieba.js.
+Also incorporates compatible behavior from agluo/ql-script-hub
+tieba_checkin.py (MIT), catalog 38ff8ca6c57173b4.
 """
 
 from __future__ import annotations
 
-import json
 import importlib.util
+import json
 import os
 import re
 import sys
@@ -18,14 +21,15 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
 NAME = "百度贴吧签到"
 FORUMS_URL = "https://tieba.baidu.com/mo/q/newmoindex"
 SIGN_URL = "https://tieba.baidu.com/sign/add"
+MAX_RESPONSE_BYTES = 1_000_000
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 Chrome/124.0 Safari/537.36"
@@ -33,6 +37,8 @@ USER_AGENT = (
 
 
 class HttpsOnlyRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """禁止携带 Cookie 跟随到非 HTTPS 地址。"""
+
     def redirect_request(self, request, file_pointer, code, message, headers, new_url):
         if urllib.parse.urlsplit(new_url).scheme.lower() != "https":
             raise urllib.error.URLError("拒绝把账号凭据重定向到非 HTTPS 地址")
@@ -42,98 +48,94 @@ class HttpsOnlyRedirectHandler(urllib.request.HTTPRedirectHandler):
 OPENER = urllib.request.build_opener(HttpsOnlyRedirectHandler())
 
 
-def enabled(name: str) -> bool:
-    return bool(re.fullmatch(r"1|true|yes|on", os.environ.get(name, ""), re.IGNORECASE))
-
-
-def notification_enabled() -> bool:
-    value = os.environ.get("QINGLONG_NOTIFY")
-    return value is None or bool(re.fullmatch(r"1|true|yes|on", value, re.IGNORECASE))
-
-
-def notify(summary: str) -> str:
-    if not notification_enabled():
-        return "⏭️ 已关闭"
-    sender = None
-    try:
-        from notify import send as sender  # type: ignore
-    except ImportError:
-        search_roots = [
-            os.getenv("QINGLONG_NOTIFY_DIR", ""),
-            "/ql/data/scripts",
-            "/ql/scripts",
-            str(Path.cwd()),
-        ]
-        for root in filter(None, search_roots):
-            notify_path = Path(root) / "notify.py"
-            if not notify_path.is_file():
-                continue
-            spec = importlib.util.spec_from_file_location("qinglong_notify", notify_path)
-            if spec and spec.loader:
-                try:
-                    module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(module)
-                    sender = getattr(module, "send", None)
-                    if callable(sender):
-                        break
-                except Exception:
-                    continue
-    if not callable(sender):
-        print(f"[{NAME}] 未找到青龙 notify.py，已跳过任务总结推送。", file=sys.stderr)
-        return "⚠️ 未找到通知组件"
-    try:
-        sender(NAME, summary)
-        return "✅ 青龙任务总结已推送"
-    except Exception as error:
-        print(f"[{NAME}] 通知发送失败：{type(error).__name__}", file=sys.stderr)
-        return "⚠️ 推送失败"
-
-
-def log_banner(mode: str, total: int) -> None:
-    print("百度贴吧签到")
-    print("═" * 62)
-    print(f"运行模式  {mode}")
-    print(f"账号数量  {total}")
-    print(f"开始时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("═" * 62)
+def now_text() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def timeline(message: str, branch: str = "◆") -> None:
     print(f"{datetime.now().strftime('%H:%M:%S')}  {branch} {message}")
 
 
-def log_task_summary(results: list[dict[str, int]], notification: str, started: float, dry_run: bool, status_override: str | None = None) -> None:
-    total = sum(item["total"] for item in results)
-    signed = sum(item["signed"] for item in results)
-    failed = sum(item["failed"] for item in results)
-    account_failed = sum(item["failed"] > 0 for item in results)
-    elapsed = round(time.monotonic() - started, 1)
-    status = status_override or ("dry_run" if dry_run and not failed else ("success" if not failed else "partial_failure"))
-    label = "配置失败" if status == "configuration_error" else ("预演通过" if status == "dry_run" else ("全部成功" if status == "success" else "部分失败"))
-    payload = {"status": status, "mode": "dry-run" if dry_run else "live", "accounts_total": len(results), "accounts_success": len(results) - account_failed, "accounts_failed": account_failed, "tasks_total": total, "tasks_success_or_complete": signed, "tasks_failed": failed, "elapsed_seconds": elapsed, "notification": notification}
-    timeline("生成任务总结")
-    timeline(f"通知状态：{notification}", "└─")
-    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
-    print(f"最终状态  {label}")
-    print(f"账号统计  总数 {len(results)} │ 成功 {len(results) - account_failed} │ 失败 {account_failed}")
-    print(f"任务统计  总数 {total} │ 成功/已完成 {signed} │ 跳过 0 │ 失败 {failed}")
-    print(f"通知状态  {notification}")
-    print(f"总耗时    {elapsed:.1f} 秒")
-    print(f"完成时间  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+def enabled(name: str) -> bool:
+    return bool(re.fullmatch(r"1|true|yes|on", os.environ.get(name, ""), re.IGNORECASE))
+
+
+def notification_enabled() -> bool:
+    value = os.environ.get("QINGLONG_NOTIFY")
+    return value is None or not bool(re.fullmatch(r"0|false|no|off", value, re.IGNORECASE))
+
+
+def notify(summary: str) -> str:
+    """发送脱敏汇总；通知失败绝不覆盖业务退出码。"""
+    if not notification_enabled():
+        return "⏭️ 已关闭"
+    sender = None
+    try:
+        from notify import send as sender  # type: ignore
+    except ImportError:
+        roots = [
+            os.getenv("QINGLONG_NOTIFY_DIR", ""),
+            "/ql/data/scripts",
+            "/ql/scripts",
+        ]
+        for root in filter(None, roots):
+            notify_path = Path(root) / "notify.py"
+            if not notify_path.is_file():
+                continue
+            spec = importlib.util.spec_from_file_location("qinglong_notify", notify_path)
+            if not spec or not spec.loader:
+                continue
+            try:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                candidate = getattr(module, "send", None)
+                if callable(candidate):
+                    sender = candidate
+                    break
+            except Exception:
+                continue
+    if not callable(sender):
+        print(f"[{NAME}] 未找到青龙 notify.py，已跳过任务总结推送。", file=sys.stderr)
+        return "⚠️ 未找到通知组件"
+    try:
+        sender(NAME, summary)
+        return "✅ 已推送"
+    except Exception as error:
+        print(f"[{NAME}] 通知发送失败：{type(error).__name__}", file=sys.stderr)
+        return "⚠️ 推送失败"
+
+
+def log_banner(mode: str, total: int) -> None:
+    print(NAME)
     print("═" * 62)
-    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    print(f"开始时间  {now_text()}")
+    print(f"运行模式  {mode}")
+    print(f"账号数量  {total}")
+    print("═" * 62)
 
 
 def parse_accounts(value: str | None) -> list[str]:
+    """每个非空行是一个账号；整行作为 Cookie，绝不按 & 或 @ 拆账号。"""
     accounts: list[str] = []
     for raw_line in str(value or "").splitlines():
         line = raw_line.strip()
         if not line:
             continue
-        cookie = line if re.search(r"(?:^|;\s*)BDUSS=", line, re.IGNORECASE) else f"BDUSS={line}"
+        has_bduss = re.search(r"(?:^|;\s*)BDUSS\s*=", line, re.IGNORECASE)
+        # 含等号的输入按完整 Cookie 处理，以便在校验阶段识别误填的 Cookie；
+        # 仅无等号的单值写法才自动补上 BDUSS 字段名。
+        cookie = line if has_bduss or "=" in line else f"BDUSS={line}"
         if cookie not in accounts:
             accounts.append(cookie)
     return accounts
+
+
+def validate_cookie(cookie: str) -> None:
+    match = re.search(r"(?:^|;\s*)BDUSS\s*=\s*([^;\s]+)", cookie, re.IGNORECASE)
+    if not match:
+        raise ValueError("账号配置中缺少非空 BDUSS")
+    if any(char in cookie for char in ("\r", "\n", "\x00")):
+        raise ValueError("账号配置包含非法控制字符")
 
 
 def account_headers(cookie: str) -> dict[str, str]:
@@ -146,16 +148,20 @@ def account_headers(cookie: str) -> dict[str, str]:
 
 
 def request_json(url: str, headers: dict[str, str], data: bytes | None = None) -> dict[str, Any]:
-    request = urllib.request.Request(url, headers=headers, data=data, method="POST" if data else "GET")
+    if urllib.parse.urlsplit(url).scheme.lower() != "https":
+        raise RuntimeError("拒绝向非 HTTPS 接口发送请求")
+    request = urllib.request.Request(url, headers=headers, data=data, method="POST" if data is not None else "GET")
     try:
         with OPENER.open(request, timeout=15) as response:
-            body = response.read(1_000_001)
-            if len(body) > 1_000_000:
+            body = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(body) > MAX_RESPONSE_BYTES:
                 raise RuntimeError("接口响应超过 1 MB 上限")
     except urllib.error.HTTPError as error:
-        raise RuntimeError(f"HTTP {error.code}") from error
+        raise RuntimeError(f"接口返回 HTTP {error.code}") from error
     except urllib.error.URLError as error:
         raise RuntimeError(f"网络请求失败：{error.reason}") from error
+    except TimeoutError as error:
+        raise RuntimeError("网络请求超时") from error
     try:
         value = json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
@@ -165,24 +171,55 @@ def request_json(url: str, headers: dict[str, str], data: bytes | None = None) -
     return value
 
 
-def get_session(headers: dict[str, str]) -> tuple[str, list[dict[str, Any]]]:
+def get_session(headers: dict[str, str]) -> tuple[str, list[dict[str, Any]], str]:
     data = request_json(FORUMS_URL, headers)
-    session = data.get("data") or {}
+    session = data.get("data")
+    if not isinstance(session, dict):
+        raise RuntimeError("登录接口返回结构异常")
     tbs = session.get("tbs") or session.get("itb_tbs")
     forums = session.get("like_forum")
     if not tbs:
-        raise RuntimeError("Cookie 已失效或未登录")
+        raise RuntimeError("Cookie 已失效或账号未登录")
     if not isinstance(forums, list):
         raise RuntimeError("未能读取关注贴吧列表")
-    return str(tbs), [
-        {"name": str(forum.get("forum_name") or ""), "signed": int(forum.get("is_sign", 0)) == 1}
-        for forum in forums
-        if isinstance(forum, dict) and forum.get("forum_name")
-    ]
+    normalized = []
+    for forum in forums:
+        if not isinstance(forum, dict) or not forum.get("forum_name"):
+            continue
+        normalized.append(
+            {
+                "name": str(forum["forum_name"]),
+                "signed": str(forum.get("is_sign", "0")) == "1",
+            }
+        )
+    identity_sources = [session]
+    identity_sources.extend(
+        value for value in session.values() if isinstance(value, dict)
+    )
+    identity = next(
+        (
+            str(source.get(key)).strip()
+            for source in identity_sources
+            for key in ("user_name", "name_show", "un", "username", "nickname")
+            if source.get(key)
+        ),
+        "",
+    )
+    if not identity:
+        identity = next(
+            (
+                f"UID {str(source.get(key)).strip()}"
+                for source in identity_sources
+                for key in ("user_id", "uid")
+                if source.get(key)
+            ),
+            "接口未返回",
+        )
+    return str(tbs), normalized, identity
 
 
-def sign_forum(headers: dict[str, str], tbs: str, name: str) -> tuple[bool, str]:
-    body = urllib.parse.urlencode({"ie": "utf-8", "kw": name, "tbs": tbs}).encode()
+def sign_forum(headers: dict[str, str], tbs: str, name: str) -> tuple[str, str]:
+    body = urllib.parse.urlencode({"ie": "utf-8", "kw": name, "tbs": tbs}).encode("utf-8")
     sign_headers = {
         **headers,
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -195,69 +232,166 @@ def sign_forum(headers: dict[str, str], tbs: str, name: str) -> tuple[bool, str]
         code = int(data.get("no", data.get("error_code", -1)))
     except (TypeError, ValueError):
         code = -1
-    return code in {0, 1101} or bool(re.search(r"已经签到|已签到", message)), message
+    if code == 0:
+        return "success", message
+    if code == 1101 or re.search(r"已经签到|已签到", message):
+        return "already", message
+    return "failed", message
+
+
+def empty_result() -> dict[str, int]:
+    return {"total": 0, "success": 0, "already": 0, "skipped": 0, "failed": 0}
+
+
+def stage(index: int, title: str, action) -> Any:
+    started = time.monotonic()
+    timeline(f"[{index}/4] {title}")
+    try:
+        result = action()
+    except Exception:
+        timeline(f"[{index}/4] {title}失败，用时 {time.monotonic() - started:.1f} 秒", "└─")
+        raise
+    timeline(f"[{index}/4] {title}完成，用时 {time.monotonic() - started:.1f} 秒", "└─")
+    return result
 
 
 def run_account(cookie: str, index: int, dry_run: bool, verbose: bool, delay_seconds: float) -> dict[str, int]:
-    prefix = f"账号 {index}"
+    result = empty_result()
+    stage(1, "参数校验", lambda: validate_cookie(cookie))
+    timeline("✓ Cookie 必要字段完整（内容已隐藏）", "└─")
+
+    if dry_run:
+        for number, title in ((2, "登录验证"), (3, "读取关注贴吧"), (4, "执行签到")):
+            started = time.monotonic()
+            timeline(f"[{number}/4] {title}")
+            timeline(f"⏭️ 预演模式：跳过网络请求和账号副作用，用时 {time.monotonic() - started:.1f} 秒", "└─")
+        result.update({"total": 1, "skipped": 1})
+        return result
+
     headers = account_headers(cookie)
-    timeline(f"账号 {index:02d}：[1/4] 参数校验")
-    timeline(f"账号 {index:02d}：✓ Cookie 必要字段完整（内容已隐藏）", "└─")
-    timeline(f"账号 {index:02d}：[2/4] 登录验证")
-    timeline(f"账号 {index:02d}：正在验证 Cookie", "└─")
-    tbs, forums = get_session(headers)
-    timeline(f"账号 {index:02d}：✓ 登录状态有效", "└─")
+    tbs, forums, identity = stage(2, "登录验证", lambda: get_session(headers))
+    timeline("✓ 登录状态有效，TBS 已获取（内容已隐藏）", "└─")
+    timeline(f"✓ 账号身份：{identity}", "└─")
+
+    list_started = time.monotonic()
+    timeline("[3/4] 读取关注贴吧")
     signed = [forum for forum in forums if forum["signed"]]
     pending = [forum for forum in forums if not forum["signed"]]
-    timeline(f"账号 {index:02d}：[3/4] 获取任务")
-    timeline(f"账号 {index:02d}：✓ 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个", "└─")
+    timeline(
+        f"✓ 共 {len(forums)} 个贴吧，已签到 {len(signed)} 个，待签到 {len(pending)} 个，用时 {time.monotonic() - list_started:.1f} 秒",
+        "└─",
+    )
     if verbose and pending:
-        print(f"[{prefix}] 待签到：{'、'.join(str(forum['name']) for forum in pending)}")
-    if dry_run:
-        timeline(f"账号 {index:02d}：[4/4] 执行任务")
-        timeline(f"账号 {index:02d}：↳ 预演模式，未发送签到请求", "└─")
-        return {"total": len(forums), "signed": len(signed), "failed": 0}
+        timeline("待签到贴吧：" + "、".join(str(forum["name"]) for forum in pending), "└─")
 
-    timeline(f"账号 {index:02d}：[4/4] 执行任务")
-    success = len(signed)
-    failures = 0
+    action_started = time.monotonic()
+    timeline("[4/4] 执行签到")
+    result.update({"total": len(forums), "already": len(signed)})
     for position, forum in enumerate(pending, 1):
+        name = str(forum["name"])
         try:
-            ok, message = sign_forum(headers, tbs, str(forum["name"]))
-            if ok:
-                success += 1
-                if verbose:
-                    timeline(f"账号 {index:02d}：✓ {forum['name']}", "├─")
+            state, message = sign_forum(headers, tbs, name)
+            if state == "success":
+                result["success"] += 1
+                timeline(f"✅ 第 {position}/{len(pending)} 项签到成功" + (f"：{name}" if verbose else ""), "├─")
+            elif state == "already":
+                result["already"] += 1
+                timeline(f"☑️ 第 {position}/{len(pending)} 项今日已完成" + (f"：{name}" if verbose else ""), "├─")
             else:
-                failures += 1
-                detail = f"：{forum['name']}（{message}）" if verbose else ""
-                timeline(f"账号 {index:02d}：✗ 第 {position}/{len(pending)} 项签到失败{detail}", "├─")
-        except Exception as error:  # Continue so the aggregate result remains complete.
-            failures += 1
-            detail = f"：{forum['name']}（{error}）" if verbose else ""
-            timeline(f"账号 {index:02d}：✗ 第 {position}/{len(pending)} 项请求异常{detail}", "├─")
+                result["failed"] += 1
+                detail = f"：{name}（{message}）" if verbose else ""
+                timeline(f"❌ 第 {position}/{len(pending)} 项签到失败{detail}", "├─")
+        except Exception as error:
+            result["failed"] += 1
+            detail = f"：{name}（{error}）" if verbose else ""
+            timeline(f"❌ 第 {position}/{len(pending)} 项请求异常{detail}", "├─")
         if position < len(pending):
             time.sleep(delay_seconds)
-    return {"total": len(forums), "signed": success, "failed": failures}
+    timeline(f"[4/4] 执行签到完成，用时 {time.monotonic() - action_started:.1f} 秒", "└─")
+    return result
+
+
+def account_failed(result: dict[str, int]) -> bool:
+    return result["failed"] > 0
+
+
+def log_task_summary(
+    results: list[dict[str, int]],
+    notification: str,
+    started: float,
+    dry_run: bool,
+    status_override: str | None = None,
+) -> None:
+    totals = {key: sum(item[key] for item in results) for key in empty_result()}
+    accounts_failed = sum(account_failed(item) for item in results)
+    accounts_success = len(results) - accounts_failed
+    elapsed = round(time.monotonic() - started, 1)
+    if status_override:
+        status = status_override
+    elif dry_run and not accounts_failed:
+        status = "dry_run"
+    elif accounts_failed == 0:
+        status = "success"
+    elif accounts_success:
+        status = "partial_failure"
+    else:
+        status = "failure"
+    labels = {
+        "configuration_error": "配置失败",
+        "dry_run": "预演通过",
+        "success": "全部成功",
+        "partial_failure": "部分失败",
+        "failure": "执行失败",
+    }
+    payload = {
+        "status": status,
+        "mode": "dry-run" if dry_run else "live",
+        "accounts_total": len(results),
+        "accounts_success": accounts_success,
+        "accounts_failed": accounts_failed,
+        "tasks_total": totals["total"],
+        "tasks_success": totals["success"],
+        "tasks_already_complete": totals["already"],
+        "tasks_skipped": totals["skipped"],
+        "tasks_failed": totals["failed"],
+        "elapsed_seconds": elapsed,
+        "notification": notification,
+    }
+    print("\n" + "═" * 24 + " 任务统计 " + "═" * 24)
+    print(f"账号统计  总数 {len(results)} │ 成功 {accounts_success} │ 失败 {accounts_failed}")
+    print(
+        f"子任务结果  总数 {totals['total']} │ 成功 {totals['success']} │ "
+        f"已完成 {totals['already']} │ 跳过 {totals['skipped']} │ 失败 {totals['failed']}"
+    )
+    print(f"总耗时    {elapsed:.1f} 秒")
+    print(f"完成时间  {now_text()}")
+    print(f"通知状态  {notification}")
+    print(f"最终状态  {labels[status]}")
+    print("═" * 62)
+    print("TASK_SUMMARY=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
 
 def main() -> int:
     started = time.monotonic()
-    accounts = parse_accounts(os.environ.get("TIEBA_COOKIE") or os.environ.get("TIE_BA_COOKIE"))
-    if not accounts:
-        log_banner("正式执行", 0)
-        message = "配置失败：缺少 TIEBA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号使用换行分隔。"
-        print(f"[{NAME}] {message}", file=sys.stderr)
-        notification = notify(message)
-        log_task_summary([], notification, started, False, "configuration_error")
-        return 2
     dry_run = enabled("TIEBA_DRY_RUN")
+    accounts = parse_accounts(os.environ.get("TIEBA_COOKIE") or os.environ.get("TIE_BA_COOKIE"))
+    log_banner("断网预演" if dry_run else "正式签到", len(accounts))
+
+    if not accounts:
+        message = "配置失败：缺少 TIEBA_COOKIE。请填写 BDUSS 或完整 Cookie，多账号每行一个。"
+        timeline(f"❌ {message}")
+        print(message, file=sys.stderr)
+        notification = notify("配置失败；账号总数 0，成功 0，失败 0。")
+        log_task_summary([], notification, started, dry_run, "configuration_error")
+        return 2
+
     verbose = enabled("TIEBA_VERBOSE")
     try:
-        delay_ms = min(10_000, max(500, int(os.environ.get("TIEBA_DELAY_MS", "1200"))))
+        delay_ms = int(os.environ.get("TIEBA_DELAY_MS", "1200"))
     except ValueError:
         delay_ms = 1200
-    log_banner("预演" if dry_run else "正式签到", len(accounts))
+        timeline("⚠️ TIEBA_DELAY_MS 格式无效，已使用安全默认值 1200 毫秒")
+    delay_ms = min(10_000, max(500, delay_ms))
 
     results: list[dict[str, int]] = []
     for index, cookie in enumerate(accounts, 1):
@@ -267,20 +401,36 @@ def main() -> int:
         try:
             result = run_account(cookie, index, dry_run, verbose, delay_ms / 1000)
         except Exception as error:
-            timeline(f"账号 {index:02d}：✗ 账号执行失败：{error}", "└─")
-            result = {"total": 0, "signed": 0, "failed": 1}
+            timeline(f"❌ 账号执行失败：{error}", "└─")
+            result = empty_result()
+            result["total"] = 1
+            result["failed"] = 1
         results.append(result)
-        account_label = "✓ 成功" if result["failed"] == 0 else "! 部分成功" if result["signed"] else "✗ 失败"
-        timeline(f"账号 {index:02d}：{account_label}")
-        timeline(f"总任务 {result['total']} │ 成功/已完成 {result['signed']} │ 跳过 0 │ 失败 {result['failed']} │ 用时 {time.monotonic() - account_started:.1f} 秒", "└─")
-    total = sum(item["total"] for item in results)
-    signed = sum(item["signed"] for item in results)
-    failed = sum(item["failed"] for item in results)
-    summary = f"{len(accounts)} 个账号，{total} 个贴吧，成功/已签到 {signed} 个，失败 {failed} 个"
+        if result["failed"]:
+            label = "❌ 失败"
+        elif dry_run:
+            label = "✅ 预演通过"
+        else:
+            label = "✅ 成功"
+        timeline(f"账号 {index:02d}：{label}")
+        timeline(
+            f"总任务 {result['total']} │ 成功 {result['success']} │ 已完成 {result['already']} │ "
+            f"跳过 {result['skipped']} │ 失败 {result['failed']} │ 用时 {time.monotonic() - account_started:.1f} 秒",
+            "└─",
+        )
+
+    failed_accounts = sum(account_failed(item) for item in results)
+    successful_accounts = len(results) - failed_accounts
+    totals = {key: sum(item[key] for item in results) for key in empty_result()}
+    summary = (
+        f"账号总数 {len(results)}，成功 {successful_accounts}，失败 {failed_accounts}；"
+        f"子任务总数 {totals['total']}，成功 {totals['success']}，已完成 {totals['already']}，"
+        f"跳过 {totals['skipped']}，失败 {totals['failed']}。"
+    )
     timeline(f"汇总：{summary}")
     notification = notify(summary)
     log_task_summary(results, notification, started, dry_run)
-    return 1 if failed else 0
+    return 1 if failed_accounts else 0
 
 
 if __name__ == "__main__":

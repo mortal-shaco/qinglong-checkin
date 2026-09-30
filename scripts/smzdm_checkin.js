@@ -1,343 +1,343 @@
 // name: 什么值得买签到
 // cron: 31 8 * * *
 'use strict';
-
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 Hex
-// Maintained derivative with security, validation, and Qinglong lifecycle fixes.
+// Upstream attribution: agluo/ql-script-hub (SMZDM_checkin.py).
+// Maintained standalone derivative; no private repository or external executable required.
 
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
 const NAME = '什么值得买签到';
+const API = 'https://user-api.smzdm.com';
 const APP_VERSION = '11.1.90';
 const APP_REV = '1190';
 const SIGN_KEY = 'apr1$AwP!wRRT$gJ/q.X24poeBInlUJC';
+const TIMEOUT_MS = 15000;
 
-function enabled(value) {
-  return /^(1|true|yes|on)$/i.test(String(value || '').trim());
-}
+const truthy = (v) => /^(1|true|yes|on)$/i.test(String(v || '').trim());
+const now = () => new Date().toLocaleString('zh-CN', {hour12: false}).replaceAll('/', '-');
+// 时间轴展示等价于 strftime 的 %H:%M:%S 格式。
+const clock = () => new Date().toLocaleTimeString('zh-CN', {hour12: false});
+const log = (message, branch = '◆') => console.log(`${clock()}  ${branch} ${message}`);
 
 function cookieValue(cookie, name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]+)`));
-  return match ? match[1] : '';
-}
-
-function requestProfile(cookie, userAgentOverride = '') {
-  const versionFromUserAgent = String(userAgentOverride).match(/smzdm_android_V([\d.]+)/i)?.[1];
-  const revisionFromUserAgent = String(userAgentOverride).match(/\brv:([\d.]+)/i)?.[1];
-  const cookiePlatform = cookieValue(cookie, 'device_smzdm').toLowerCase();
-  const androidCookie = !['iphone', 'ios'].includes(cookiePlatform);
-  const version = (androidCookie && (
-    cookieValue(cookie, 'device_smzdm_version') || cookieValue(cookie, 'v')
-  ))
-    || versionFromUserAgent
-    || APP_VERSION;
-  const revision = (androidCookie && cookieValue(cookie, 'device_smzdm_version_code'))
-    || revisionFromUserAgent
-    || APP_REV;
-  const userAgent = String(userAgentOverride || '').trim()
-    || `smzdm_android_V${version} rv:${revision} (Android10.0;zh)smzdmapp`;
-  return {revision, userAgent, version};
-}
-
-function emitResult(data) {
-  process.stdout.write(`BENEFIT_RESULT=${JSON.stringify(data)}\n`);
-}
-
-function outputSummary(data, exitCode = 0) {
-  process.stdout.write(`BENEFIT_SUMMARY=${JSON.stringify(data)}\n`);
-  process.exitCode = exitCode;
-}
-
-function notificationEnabled(environment = process.env) {
-  return environment.QINGLONG_NOTIFY === undefined || enabled(environment.QINGLONG_NOTIFY);
-}
-
-function findNotifier(environment = process.env) {
-  const roots = [
-    environment.QINGLONG_NOTIFY_DIR,
-    '/ql/data/scripts',
-    '/ql/scripts',
-    process.cwd(),
-    path.resolve(__dirname, '..'),
-  ].filter(Boolean);
-  for (const root of roots) {
-    const candidate = path.join(root, 'sendNotify.js');
-    if (!fs.existsSync(candidate)) continue;
-    try {
-      const loaded = require(candidate);
-      const sender = loaded.sendNotify || loaded;
-      if (typeof sender === 'function') return sender;
-    } catch { /* A broken notifier must not replace the task result. */ }
-  }
-  return null;
-}
-
-async function notifySummary(summary, environment = process.env) {
-  if (!notificationEnabled(environment)) return '⏭️ 已关闭';
-  const sender = findNotifier(environment);
-  if (!sender) {
-    process.stderr.write(`[${NAME}] 未找到青龙 sendNotify.js，已跳过任务总结推送。\n`);
-    return '⚠️ 未找到通知组件';
-  }
-  try {
-    await sender(NAME, summary);
-    return '✅ 青龙任务总结已推送';
-  } catch (error) {
-    process.stderr.write(`[${NAME}] 通知发送失败：${error?.name || 'Error'}\n`);
-    return '⚠️ 推送失败';
-  }
-}
-
-function nowText() {
-  return new Date().toLocaleString('zh-CN', {hour12: false}).replaceAll('/', '-');
-}
-
-function timeText() {
-  return new Date().toLocaleTimeString('zh-CN', {hour12: false}); // %H:%M:%S
-}
-
-function timeline(message, branch = '◆') {
-  console.log(`${timeText()}  ${branch} ${message}`);
-}
-
-function logBanner(mode, total) {
-  console.log('什么值得买签到');
-  console.log('═'.repeat(62));
-  console.log(`运行模式  ${mode}`);
-  console.log(`账号数量  ${total}`);
-  console.log(`开始时间  ${nowText()}`);
-  console.log('═'.repeat(62));
-}
-
-function logTaskSummary(summary, notification, startedAt) {
-  const elapsed = Math.round((Date.now() - startedAt) / 100) / 10;
-  const payload = {...summary, elapsed_seconds: elapsed, notification};
-  const label = summary.execution === 'ok'
-    ? (summary.mode === 'dry-run' ? '预演通过' : '全部成功')
-    : (summary.accounts_success > 0 ? '部分失败' : '失败');
-  timeline('生成任务总结');
-  timeline(`通知状态：${notification}`, '└─');
-  console.log(`\n${'═'.repeat(24)} 任务统计 ${'═'.repeat(24)}`);
-  console.log(`最终状态  ${label}`);
-  console.log(`账号统计  总数 ${summary.accounts_total || 0} │ 成功 ${summary.accounts_success || 0} │ 失败 ${summary.accounts_failed || 0}`);
-  console.log(`任务统计  总数 ${summary.accounts_total || 0} │ 成功 ${summary.accounts_success || 0} │ 已完成 0 │ 跳过 0 │ 失败 ${summary.accounts_failed || 0}`);
-  console.log(`待确认    ${summary.accounts_pending_confirmation || 0}`);
-  console.log(`通知状态  ${notification}`);
-  console.log(`总耗时    ${elapsed.toFixed(1)} 秒`);
-  console.log(`完成时间  ${nowText()}`);
-  console.log('═'.repeat(62));
-  console.log(`TASK_SUMMARY=${JSON.stringify(payload)}`);
-}
-
-async function finish(summary, exitCode, environment = process.env, startedAt = Date.now()) {
-  outputSummary(summary, exitCode);
-  const notification = await notifySummary(JSON.stringify(summary), environment);
-  logTaskSummary(summary, notification, startedAt);
+  return cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]+)`))?.[1] || '';
 }
 
 function accountLines(value) {
-  return String(value || '').split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+  return String(value || '').split(/\r?\n/).map((v) => v.trim()).filter(Boolean);
 }
 
-function parseAccountPairs(environment = process.env) {
-  const lines = accountLines(environment.SMZDM_ACCOUNT);
-  if (!lines.length) throw new Error('missing_SMZDM_ACCOUNT');
-  return lines.map((line, index) => {
-    const separator = line.indexOf('|');
-    if (separator <= 0 || separator === line.length - 1) {
-      throw new Error(`invalid_SMZDM_ACCOUNT_format_at_line_${index + 1}`);
-    }
-    const sk = line.slice(0, separator).trim();
-    const cookie = line.slice(separator + 1).trim();
-    if (!sk) throw new Error(`missing_sk_at_line_${index + 1}`);
-    if (!cookieValue(cookie, 'sess')) throw new Error(`missing_sess_cookie_at_line_${index + 1}`);
-    return {cookie, sk};
+function parseAccounts(env = process.env) {
+  const lines = accountLines(env.SMZDM_ACCOUNT);
+  if (!lines.length) throw new Error('未配置 SMZDM_ACCOUNT');
+  return lines.map((line, i) => {
+    const split = line.indexOf('|');
+    if (split < 1 || split === line.length - 1) throw new Error(`invalid_SMZDM_ACCOUNT_format_at_line_${i + 1}：应为 sk|Cookie`);
+    const sk = line.slice(0, split).trim();
+    const cookie = line.slice(split + 1).trim();
+    if (!cookieValue(cookie, 'sess')) throw new Error(`第 ${i + 1} 行 Cookie 缺少 sess`);
+    return {sk, cookie};
   });
 }
 
-function signedForm(data = {}, now = Date.now(), appVersion = APP_VERSION) {
-  const body = {
-    weixin: 1,
-    basic_v: 0,
-    f: 'android',
-    v: appVersion,
-    time: `${Math.round(now / 1000)}000`,
-    ...data,
+function requestProfile(cookie, override = '') {
+  const overrideText = String(override).trim();
+  const platform = cookieValue(cookie, 'device_smzdm').toLowerCase();
+  const androidCookie = !['iphone', 'ios'].includes(platform);
+  const version = (androidCookie && (cookieValue(cookie, 'device_smzdm_version') || cookieValue(cookie, 'v')))
+    || overrideText.match(/smzdm_android_V([\d.]+)/i)?.[1]
+    || APP_VERSION;
+  const revision = (androidCookie && cookieValue(cookie, 'device_smzdm_version_code'))
+    || overrideText.match(/\brv:([\d.]+)/i)?.[1]
+    || APP_REV;
+  return {
+    revision,
+    version,
+    userAgent: overrideText || `smzdm_android_V${version} rv:${revision} (Android10.0;zh)smzdmapp`,
   };
-  const keys = Object.keys(body).filter((key) => body[key] !== '').sort();
-  const raw = keys.map((key) => `${key}=${String(body[key]).replace(/\s+/g, '')}`).join('&');
+}
+
+const profile = requestProfile;
+
+function signedForm(data, version) {
+  const body = {weixin: 1, basic_v: 0, f: 'android', v: version, time: `${Math.round(Date.now() / 1000)}000`, ...data};
+  const raw = Object.keys(body).filter((k) => body[k] !== '').sort()
+    .map((k) => `${k}=${String(body[k]).replace(/\s+/g, '')}`).join('&');
   body.sign = crypto.createHash('md5').update(`${raw}&key=${SIGN_KEY}`).digest('hex').toUpperCase();
   return new URLSearchParams(body).toString();
 }
 
 function requestKey() {
-  return Array.from(crypto.randomBytes(18), (byte) => String(byte % 10)).join('');
+  return Array.from(crypto.randomBytes(18), (b) => String(b % 10)).join('');
 }
 
-async function request(path, cookie, profile, data = {}) {
+async function fetchLimited(url, options = {}, maxBytes = 1024 * 1024) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30_000);
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(`https://user-api.smzdm.com${path}`, {
-      method: 'POST',
-      headers: {
-        Accept: '*/*',
-        'Accept-Language': 'zh-Hans-CN;q=1',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        request_key: requestKey(),
-        'User-Agent': profile.userAgent,
-        Cookie: cookie,
-      },
-      body: signedForm(data, Date.now(), profile.version),
-      signal: controller.signal,
-    });
+    const response = await fetch(url, {...options, signal: controller.signal});
+    const size = Number(response.headers?.get?.('content-length') || 0);
+    if (size > maxBytes) throw new Error('response_too_large');
     const text = await response.text();
-    let payload = {};
-    try { payload = JSON.parse(text); } catch { /* Never echo an untrusted body. */ }
-    return {httpStatus: response.status, payload};
-  } finally {
-    clearTimeout(timer);
-  }
+    if (Buffer.byteLength(text) > maxBytes) throw new Error('response_too_large');
+    return {status: response.status, text};
+  } finally { clearTimeout(timer); }
 }
 
-function classifyError(response) {
-  if ([401, 403].includes(response.httpStatus)) return 'authentication_invalid';
-  if (response.httpStatus === 429) return 'rate_limited';
-  if (!response.httpStatus || response.httpStatus >= 500) return 'network_error';
-  return 'business_failure';
+async function apiRequest(endpoint, account, data = {}) {
+  const p = profile(account.cookie, process.env.SMZDM_USER_AGENT_APP);
+  const response = await fetchLimited(`${API}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      Accept: '*/*', 'Accept-Language': 'zh-Hans-CN;q=1',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': p.userAgent, Cookie: account.cookie, request_key: requestKey(),
+    },
+    body: signedForm(data, p.version),
+  });
+  let payload = null;
+  try { payload = JSON.parse(response.text); } catch { /* raw response is intentionally discarded */ }
+  return {status: response.status, httpStatus: response.status, payload};
 }
 
 function queryFailure(response) {
-  if (response.payload?.error_code == '0') return null;
+  if (String(response.payload?.error_code) === '0') return null;
+  const status = response.httpStatus ?? response.status ?? null;
+  const errorClass = [401, 403].includes(status) ? 'authentication_invalid'
+    : status === 429 ? 'rate_limited'
+      : (!status || status >= 500) ? 'network_error' : 'business_failure';
   return {
-    class: classifyError(response),
-    http_status: response.httpStatus || null,
+    class: errorClass,
+    http_status: status,
     error_code: String(response.payload?.error_code ?? 'missing').slice(0, 40),
   };
 }
 
-function signOutcome(response) {
-  if (response.payload?.error_code == '0') return {ok: true, status: 'new_complete'};
-  const message = String(response.payload?.error_msg || response.payload?.error_message || '');
-  if (/已签到|already/i.test(message)) return {ok: true, status: 'already_complete'};
-  if (/验证码|验证|captcha/i.test(message)) return {ok: false, status: 'human_required', error: 'captcha_required'};
-  if (/限制|风控|异常活动|restricted/i.test(message)) {
-    return {ok: false, status: 'restriction_detected', error: 'restriction_detected'};
+function apiFailure(response) {
+  if (response.status !== 200) return `HTTP_${response.status}`;
+  if (!response.payload || typeof response.payload !== 'object') return '响应不是有效 JSON';
+  if (String(response.payload.error_code) !== '0') {
+    return `业务码_${String(response.payload.error_code ?? '缺失').slice(0, 24)}`;
   }
-  return {ok: false, status: 'status_unknown', error: classifyError(response)};
+  return null;
 }
 
-async function runAccount(account, userAgentOverride = '') {
-  const profile = requestProfile(account.cookie, userAgentOverride);
-  const sessionFields = {sk: account.sk, token: cookieValue(account.cookie, 'sess')};
-  const sign = await request('/checkin', account.cookie, profile, {
-    touchstone_event: '', sk: account.sk, token: cookieValue(account.cookie, 'sess'), captcha: '',
+function signResult(response) {
+  if (!apiFailure(response)) return {ok: true, state: '签到成功'};
+  const message = String(response.payload?.error_msg || response.payload?.error_message || '');
+  if (/已签到|重复签到|already/i.test(message)) return {ok: true, state: '今日已签到'};
+  if (/验证码|验证|captcha/i.test(message)) return {ok: false, state: '需要人工验证'};
+  if (/限制|风控|异常活动|restricted/i.test(message)) return {ok: false, state: '账号受限'};
+  return {ok: false, state: apiFailure(response)};
+}
+
+async function accountOverview(account) {
+  const response = await fetchLimited('https://zhiyou.smzdm.com/user/', {
+    headers: {Cookie: account.cookie, 'User-Agent': profile(account.cookie).userAgent, Accept: 'text/html'},
   });
-  const outcome = signOutcome(sign);
-  if (!outcome.ok) {
-    return {execution: 'failed', sign_status: outcome.status, error_class: outcome.error};
+  if (response.status !== 200) throw new Error(`HTTP_${response.status}`);
+  const identityMatch = response.text.match(/(?:user-name|nickname|user_name)[^>]*>\s*([^<]{1,80})</i)
+    || response.text.match(/<title>\s*([^<]{1,80}?)(?:的个人主页|个人主页|_什么值得买)/i);
+  const identity = identityMatch?.[1]?.replace(/&(?:nbsp|#160);/gi, ' ').replace(/&amp;/gi, '&').trim() || null;
+  return {
+    identity,
+    level: response.text.match(/\/level\/(\d+)\.png/i)?.[1] || null,
+    gold: response.text.match(/assets-gold[\s\S]*?assets-num[^>]*>([^<]+)/i)?.[1]?.trim() || null,
+    silver: response.text.match(/assets-prestige[\s\S]*?assets-num[^>]*>([^<]+)/i)?.[1]?.trim() || null,
+  };
+}
+
+async function monthlyExperience(account) {
+  const month = new Date().toISOString().slice(0, 7);
+  let total = 0;
+  for (let page = 1; page <= 3; page += 1) {
+    const response = await fetchLimited(`https://zhiyou.m.smzdm.com/user/exp/ajax_log?page=${page}`, {
+      headers: {Cookie: account.cookie, 'User-Agent': profile(account.cookie).userAgent, Accept: 'application/json'},
+    });
+    if (response.status !== 200) throw new Error(`HTTP_${response.status}`);
+    let payload;
+    try { payload = JSON.parse(response.text); } catch { throw new Error('响应不是有效 JSON'); }
+    const rows = payload?.data?.rows;
+    if (!Array.isArray(rows)) throw new Error('经验响应字段缺失');
+    if (!rows.length) break;
+    for (const row of rows) {
+      const rowMonth = String(row?.creation_date || '').slice(0, 7);
+      if (rowMonth === month) total += Number.parseInt(row?.add_exp, 10) || 0;
+      else if (rowMonth && rowMonth < month) return total;
+    }
+  }
+  return total;
+}
+
+async function runLive(account) {
+  const session = {sk: account.sk, token: cookieValue(account.cookie, 'sess')};
+  const sign = await apiRequest('/checkin', account, {...session, touchstone_event: '', captcha: ''});
+  const signed = signResult(sign);
+  if (!signed.ok) return {ok: false, state: signed.state, steps: {sign: 'failed'}};
+
+  const reward = await apiRequest('/checkin/all_reward', account, session);
+  const view = await apiRequest('/checkin/show_view_v2', account, session);
+  const rewardError = apiFailure(reward);
+  const viewError = apiFailure(view);
+  if (rewardError || viewError) return {ok: false, state: '签到已完成但奖励状态未验证', steps: {sign: signed.state, reward: rewardError || 'ok', view: viewError || 'ok'}};
+
+  let extra = '无需领取';
+  const rows = view.payload?.data?.rows;
+  if (!Array.isArray(rows)) return {ok: false, state: '奖励视图字段缺失', steps: {sign: signed.state, reward: 'ok', view: 'failed'}};
+  const continuous = rows.find((item) => String(item?.cell_type) === '18001');
+  if (continuous?.cell_data?.checkin_continue?.continue_checkin_reward_show) {
+    const claimed = await apiRequest('/checkin/extra_reward', account, session);
+    const claimError = apiFailure(claimed);
+    if (claimError) return {ok: false, state: '额外奖励领取未验证', steps: {sign: signed.state, reward: 'ok', extra: claimError}};
+    extra = '领取成功';
   }
 
-  const rewardQuery = await request('/checkin/all_reward', account.cookie, profile, sessionFields);
-  const view = await request('/checkin/show_view_v2', account.cookie, profile, sessionFields);
-  const rewardQueryFailure = queryFailure(rewardQuery);
-  const viewQueryFailure = queryFailure(view);
+  let overview = null;
+  let experience = null;
+  const warnings = [];
+  try { overview = await accountOverview(account); } catch (e) { warnings.push(`账号概览：${e.message}`); }
+  try { experience = await monthlyExperience(account); } catch (e) { warnings.push(`本月经验：${e.message}`); }
+  return {ok: true, state: signed.state, extra, overview, experience, warnings};
+}
 
-  let extraStatus = 'not_available';
-  let extraRewardError = null;
-  const rows = viewQueryFailure ? [] : (view.payload?.data?.rows || []);
-  const continuous = rows.find((item) => item?.cell_type == '18001');
+// 保留旧维护版的公开测试/集成接口，避免更新合并破坏既有调用方。
+async function runAccount(account, userAgentOverride = '') {
+  const p = requestProfile(account.cookie, userAgentOverride);
+  const session = {sk: account.sk, token: cookieValue(account.cookie, 'sess')};
+  const sign = await apiRequest('/checkin', account, {...session, touchstone_event: '', captcha: ''});
+  const signed = signResult(sign);
+  if (!signed.ok) return {execution: 'failed', sign_status: signed.state, error_class: queryFailure(sign)?.class || 'business_failure'};
+  const reward = await apiRequest('/checkin/all_reward', account, session);
+  const view = await apiRequest('/checkin/show_view_v2', account, session);
+  const rewardError = queryFailure(reward);
+  const viewError = queryFailure(view);
+  let extraStatus = viewError ? 'pending_confirmation' : 'not_available';
+  const rows = viewError ? [] : (view.payload?.data?.rows || []);
+  const continuous = rows.find((item) => String(item?.cell_type) === '18001');
   if (continuous?.cell_data?.checkin_continue?.continue_checkin_reward_show) {
-    const extra = await request('/checkin/extra_reward', account.cookie, profile, sessionFields);
-    extraRewardError = queryFailure(extra);
-    extraStatus = extraRewardError ? 'pending_confirmation' : 'confirmed';
-  } else if (viewQueryFailure) {
-    extraStatus = 'pending_confirmation';
+    const extra = await apiRequest('/checkin/extra_reward', account, session);
+    extraStatus = queryFailure(extra) ? 'pending_confirmation' : 'confirmed';
   }
   return {
-    execution: 'ok',
-    sign_status: outcome.status,
-    sign_days: sign.payload?.data?.daily_num ?? null,
-    reward_status: rewardQueryFailure ? 'pending_confirmation' : 'confirmed',
-    extra_reward_status: extraStatus,
-    ...(rewardQueryFailure ? {reward_query_error: rewardQueryFailure} : {}),
-    ...(viewQueryFailure ? {view_query_error: viewQueryFailure} : {}),
-    ...(extraRewardError ? {extra_reward_error: extraRewardError} : {}),
+    execution: 'ok', sign_status: signed.state, sign_days: sign.payload?.data?.daily_num ?? null,
+    reward_status: rewardError ? 'pending_confirmation' : 'confirmed', extra_reward_status: extraStatus,
   };
 }
 
-async function run(environment = process.env) {
-  const startedAt = Date.now();
-  let accounts;
-  try {
-    accounts = parseAccountPairs(environment);
-  } catch (error) {
-    logBanner('正式执行', 0);
-    return finish({execution: 'failed', mode: 'configuration', accounts_total: 0, accounts_success: 0, accounts_failed: 0, accounts_pending_confirmation: 0, error_class: error.message}, 2, environment, startedAt);
+function notifier(env = process.env) {
+  const roots = [env.QINGLONG_NOTIFY_DIR, '/ql/data/scripts', '/ql/scripts'].filter(Boolean);
+  for (const root of roots) {
+    const file = path.join(root, 'sendNotify.js');
+    if (!fs.existsSync(file)) continue;
+    try {
+      const loaded = require(file);
+      const send = loaded.sendNotify || loaded;
+      if (typeof send === 'function') return send;
+    } catch { /* notification cannot alter the business result */ }
   }
-  const userAgent = String(environment.SMZDM_USER_AGENT_APP || '').trim();
-  const dryRun = enabled(environment.SMZDM_DRY_RUN);
-  logBanner(dryRun ? '预演' : '正式执行', accounts.length);
+  return null;
+}
+
+async function sendNotification(summary, env = process.env) {
+  if (env.QINGLONG_NOTIFY !== undefined && /^(0|false|no|off)$/i.test(env.QINGLONG_NOTIFY.trim())) return '已关闭';
+  const send = notifier(env);
+  if (!send) return '通知组件不可用';
+  try {
+    await send(NAME, JSON.stringify(summary));
+    return '发送成功';
+  } catch { return '发送失败'; }
+}
+
+function emitResult(result) { console.log(`BENEFIT_RESULT=${JSON.stringify(result)}`); }
+
+async function finish(summary, code, started, env) {
+  console.log(`BENEFIT_SUMMARY=${JSON.stringify(summary)}`);
+  const notification = await sendNotification(summary, env);
+  const elapsed = Number(((Date.now() - started) / 1000).toFixed(1));
+  const complete = {...summary, elapsed_seconds: elapsed, notification};
+  log('生成任务总结');
+  console.log(`\n${'═'.repeat(24)} 任务统计 ${'═'.repeat(24)}`);
+  console.log(`账号统计  总数 ${summary.accounts_total} │ 成功 ${summary.accounts_success} │ 失败 ${summary.accounts_failed}`);
+  console.log(`子任务统计  总数 ${summary.tasks_total} │ 成功 ${summary.tasks_success} │ 已完成 ${summary.tasks_already} │ 跳过 ${summary.tasks_skipped} │ 失败 ${summary.tasks_failed}`);
+  console.log(`通知状态  ${notification}`);
+  console.log(`总耗时    ${elapsed.toFixed(1)} 秒`);
+  console.log(`完成时间  ${now()}`);
+  console.log(`最终状态  ${code === 0 ? (summary.mode === 'dry-run' ? '预演通过' : '全部成功') : '失败'}`);
+  console.log('═'.repeat(62));
+  console.log(`TASK_SUMMARY=${JSON.stringify(complete)}`);
+  process.exitCode = code;
+}
+
+async function run(env = process.env) {
+  const started = Date.now();
+  const dryRun = truthy(env.SMZDM_DRY_RUN);
+  let accounts;
+  try { accounts = parseAccounts(env); } catch (error) {
+    console.log(NAME); console.log('═'.repeat(62));
+    console.log(`开始时间  ${now()}\n运行模式  配置检查\n账号数量  0`);
+    log(`[1/1] 参数校验失败：${error.message}`, '❌');
+    return finish({execution: 'failed', mode: 'configuration', accounts_total: 0, accounts_success: 0, accounts_failed: 0, accounts_pending_confirmation: 0, tasks_total: 1, tasks_success: 0, tasks_already: 0, tasks_skipped: 0, tasks_failed: 1}, 2, started, env);
+  }
+  console.log(NAME); console.log('═'.repeat(62));
+  console.log(`开始时间  ${now()}\n运行模式  ${dryRun ? '离线预演' : '正式执行'}\n账号数量  ${accounts.length}`);
+  console.log('═'.repeat(62));
   const results = [];
-  for (const [offset, account] of accounts.entries()) {
+  for (let i = 0; i < accounts.length; i += 1) {
+    const label = `账号 ${String(i + 1).padStart(2, '0')}`;
     const accountStarted = Date.now();
-    const accountLabel = `账号 ${String(offset + 1).padStart(2, '0')}`;
     console.log('');
-    timeline(`${accountLabel}：[1/4] 参数校验（${offset + 1}/${accounts.length}）`);
-    timeline(`${accountLabel}：✓ sk 与 sess 已配对（内容已隐藏）`, '└─');
-    timeline(`${accountLabel}：[2/4] 执行签到`);
+    log(`${label}：[1/4] 校验账号参数`); log(`${label}：sk 与 sess 格式有效（内容已隐藏）`, '└─');
     let result;
     if (dryRun) {
-      result = {execution: 'ok', mode: 'dry-run', sign_status: 'planned', requests_planned: 3};
-      timeline(`${accountLabel}：↳ 预演模式，未发送签到请求`, '└─');
-      timeline(`${accountLabel}：[3/4] 查询奖励`);
-      timeline(`${accountLabel}：↳ 预演模式，未发送奖励查询`, '└─');
+      log(`${label}：[2/4] 规划签到请求`); log(`${label}：离线预演，未发出网络请求`, '⏭️');
+      log(`${label}：[3/4] 规划奖励、概览与经验查询`); log(`${label}：离线预演，未发出网络请求`, '⏭️');
+      result = {ok: true, state: '预演通过', planned_requests: 7, skipped: 6};
     } else {
-      try {
-        result = await runAccount(account, userAgent);
-        timeline(`${accountLabel}：${result.execution === 'ok' ? '✓' : '✗'} 签到状态：${result.sign_status}`, '└─');
-        timeline(`${accountLabel}：[3/4] 查询奖励`);
-        timeline(`${accountLabel}：${result.reward_status === 'confirmed' ? '✓' : '!'} 奖励状态：${result.reward_status || '未执行'}`, '└─');
-      } catch (error) {
-        result = {
-          execution: 'failed',
-          sign_status: 'network_error',
-          error_class: error?.name === 'AbortError' ? 'request_timeout' : 'network_error',
-        };
+      log(`${label}：[2/4] 执行签到`);
+      try { result = await runLive(accounts[i]); } catch (error) {
+        result = {ok: false, state: error?.name === 'AbortError' ? '请求超时' : '网络或处理异常'};
+      }
+      log(`${label}：${result.state}`, result.ok ? '✅' : '❌');
+      log(`${label}：[3/4] 核对奖励、概览与本月经验`);
+      if (result.ok) {
+        log(`${label}：连续奖励 ${result.extra}`, '└─');
+        log(`${label}：账号身份 ${result.overview?.identity ?? '接口未返回'}，等级 ${result.overview?.level ?? '未取得'}，金币 ${result.overview?.gold ?? '未取得'}，碎银 ${result.overview?.silver ?? '未取得'}，本月经验 ${result.experience ?? '未取得'}`, '└─');
+        for (const warning of result.warnings || []) log(`${label}：${warning}`, '⚠️');
       }
     }
-    timeline(`${accountLabel}：[4/4] 生成账号结果`);
-    timeline(`${accountLabel}：${result.execution === 'ok' ? '✓ 账号任务完成' : `✗ ${result.error_class || '执行失败'}`}`, '└─');
-    results.push(result);
-    emitResult({account: offset + 1, ...result});
-    timeline(`${accountLabel}：${result.execution === 'ok' ? '✓ 成功' : '✗ 失败'}`);
-    timeline(`总任务 1 │ 成功 ${result.execution === 'ok' ? 1 : 0} │ 已完成 0 │ 跳过 0 │ 失败 ${result.execution === 'ok' ? 0 : 1} │ 用时 ${((Date.now() - accountStarted) / 1000).toFixed(1)} 秒`, '└─');
+    log(`${label}：[4/4] 生成账号结果`);
+    const tasksTotal = dryRun ? 7 : 4;
+    const failed = result.ok ? 0 : 1;
+    const already = result.state === '今日已签到' ? 1 : 0;
+    const skipped = dryRun ? 6 : (result.ok ? 0 : 3);
+    const succeeded = tasksTotal - failed - already - skipped;
+    emitResult({account: i + 1, execution: result.ok ? 'ok' : 'failed', status: result.state});
+    log(`${label}：总任务 ${tasksTotal} │ 成功 ${succeeded} │ 已完成 ${already} │ 跳过 ${skipped} │ 失败 ${failed} │ 用时 ${((Date.now() - accountStarted) / 1000).toFixed(1)} 秒`, '└─');
+    results.push({...result, tasksTotal, tasksSucceeded: succeeded, tasksAlready: already, tasksSkipped: skipped, tasksFailed: failed});
   }
-  const failed = results.filter((item) => item.execution !== 'ok').length;
-  const pending = results.filter((item) => (
-    item.reward_status === 'pending_confirmation'
-      || item.extra_reward_status === 'pending_confirmation'
-  )).length;
-  const summary = {
-    execution: failed === 0 ? 'ok' : 'failed',
-    mode: dryRun ? 'dry-run' : 'live',
-    accounts_total: accounts.length,
-    accounts_success: accounts.length - failed,
-    accounts_failed: failed,
-    accounts_pending_confirmation: pending,
-  };
-  return finish(summary, failed === 0 ? 0 : 1, environment, startedAt);
+  const failures = results.filter((r) => !r.ok).length;
+  const skipped = results.reduce((n, r) => n + r.tasksSkipped, 0);
+  const totalTasks = results.reduce((n, r) => n + r.tasksTotal, 0);
+  const already = results.reduce((n, r) => n + r.tasksAlready, 0);
+  const succeeded = results.reduce((n, r) => n + r.tasksSucceeded, 0);
+  const failedTasks = results.reduce((n, r) => n + r.tasksFailed, 0);
+  return finish({
+    execution: failures ? 'failed' : 'ok', mode: dryRun ? 'dry-run' : 'live',
+    accounts_total: accounts.length, accounts_success: accounts.length - failures, accounts_failed: failures,
+    accounts_pending_confirmation: results.filter((r) => r.reward_status === 'pending_confirmation' || r.extra_reward_status === 'pending_confirmation').length,
+    tasks_total: totalTasks, tasks_success: succeeded,
+    tasks_already: already, tasks_skipped: skipped, tasks_failed: failedTasks,
+  }, failures ? 1 : 0, started, env);
 }
 
-if (require.main === module) {
-  run().catch(() => finish({execution: 'failed', error_class: 'unhandled_error'}, 1));
-}
+if (require.main === module) run().catch(async () => {
+  const started = Date.now();
+  await finish({execution: 'failed', mode: 'live', accounts_total: 0, accounts_success: 0, accounts_failed: 1, tasks_total: 1, tasks_success: 0, tasks_already: 0, tasks_skipped: 0, tasks_failed: 1}, 1, started, process.env);
+});
 
-module.exports = {
-  accountLines, cookieValue, enabled, findNotifier, notificationEnabled, notifySummary,
-  parseAccountPairs, queryFailure, requestProfile, run, runAccount, signOutcome, signedForm,
-};
+module.exports = {accountLines, apiFailure, cookieValue, parseAccounts, profile, queryFailure, requestProfile, run, runAccount, signedForm, signResult};

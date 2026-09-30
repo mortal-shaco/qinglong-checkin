@@ -27,6 +27,29 @@
 
 采用固定的目录级规则，不再逐个枚举脚本：白名单只同步 `scripts/` 下的 `js`、`py`、`sh` 文件，因此以后新增业务脚本无需修改订阅。黑名单进一步排除文档、测试、脱敏验证材料、`shared/` 公共组件、缓存、隐藏文件和下划线开头的辅助文件。非任务组件必须放入 `shared/`，不得放在 `scripts/`；`scripts/` 中的任务必须带青龙可识别的 `name:` / `cron:` 元数据。若面板显示“文件后缀”，填写 `js py sh`。
 
+## 定时任务
+
+| 任务名称 | 脚本 | 青龙命令 | 建议 Cron |
+| --- | --- | --- | --- |
+| 依赖安装 | `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
+| 阿里云盘签到 | `scripts/aliyunpan_checkin.py` | `python3 scripts/aliyunpan_checkin.py` | `3 11 * * *` |
+| 百度网盘签到 | `scripts/baiduwangpan_checkin.py` | `python3 scripts/baiduwangpan_checkin.py` | `0 9 * * *` |
+| 春风动力签到 | `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
+| 快手奖励任务 | `scripts/kuaishou_reward_status.py` | `python3 scripts/kuaishou_reward_status.py` | `38 8,14,20 * * *` |
+| 什么值得买签到 | `scripts/smzdm_checkin.js` | `node scripts/smzdm_checkin.js` | `31 8 * * *` |
+| 百度贴吧签到 | `scripts/tieba_checkin.py` | `python3 scripts/tieba_checkin.py` | `23 8 * * *` |
+
+依赖安装任务会读取本仓库的 `requirements.txt`、`package-lock.json` 或 `package.json`；没有额外依赖时安全退出，不会执行远程安装脚本。
+
+## 脚本功能
+
+- `scripts/aliyunpan_checkin.py`：执行阿里云盘每日会员签到并明确验证接口结果；按换行多账号独立处理并汇总退出状态；提供完全断网且结果确定的预演模拟；检测刷新令牌轮换并可选安全写入本地文件。
+- `scripts/baiduwangpan_checkin.py`：每日百度网盘会员签到，明确验证积分或已完成状态；获取并提交每日会员成长问题答案；读取并报告脱敏用户名、会员等级、成长值和会员类型；逐行多账号独立处理与结构化 JSON 汇总；完全断网的配置预演；成功、部分失败、失败、配置错误和预演状态的青龙脱敏汇总通知。
+- `scripts/cfmoto_checkin.py`：执行每日签到；发帖和评论优先使用接口随机文本，返回出处时拼接作者与作品信息，接口异常时使用本地文案兜底；按配置发布帖子、评论、点赞并完成分享积分任务。
+- `scripts/kuaishou_reward_status.py`：只读查询快手收益与任务状态；按白名单输出非敏感状态字段；换行多账号独立执行并汇总。
+- `scripts/smzdm_checkin.js`：校验账号的 sk 与 sess 配套凭据；执行什么值得买每日签到并识别今日已签到状态；查询签到奖励与连续签到状态；满足条件时领取连续签到额外奖励；查询并显示接口可取得的账号身份、等级、金币和碎银概览；统计当月经验变动；支持逐行多账号独立处理与失败汇总；提供完全断网的离线预演；输出时间轴日志、兼容结果记录和单行 TASK_SUMMARY JSON；按青龙通知策略发送脱敏汇总。
+- `scripts/tieba_checkin.py`：验证百度贴吧登录状态并获取签到所需的 TBS；显示登录接口可取得的账号昵称、用户名或公开 UID，方便核对账号；读取账号关注的贴吧列表并识别当日已签到项目；为尚未签到的关注贴吧执行每日签到；支持每行一个账号的多账号独立处理和统一脱敏通知；提供完全断网、不会产生账号副作用的配置预演；输出逐阶段时间轴、账号统计和单行结构化任务汇总。
+
 ## 环境变量与参数
 
 先配置“必选参数”再运行脚本；缺少任一必选参数时任务会失败。可选参数只用于调整行为，不影响首次配置。敏感值不得写入脚本、订阅地址或日志。
@@ -36,12 +59,12 @@
 <table>
 <thead><tr><th>脚本</th><th>变量</th><th>敏感</th><th>填写格式</th></tr></thead>
 <tbody>
-<tr><td rowspan="1"><code>scripts/aliyunpan_checkin.py</code></td><td><code>ALIYUN_REFRESH_TOKEN</code></td><td>是</td><td>格式：One non-empty refresh token per line; blank lines are ignored.；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="1"><code>scripts/aliyunpan_checkin.py</code></td><td><code>ALIYUN_REFRESH_TOKEN</code></td><td>是</td><td>格式：每个非空行填写一个刷新令牌，空行会被忽略。；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/baiduwangpan_checkin.py</code></td><td><code>BAIDU_COOKIE</code></td><td>是</td><td>格式：每个账号一个非空行；每行是包含 key=value 的完整 Cookie 请求头；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/cfmoto_checkin.py</code></td><td><code>CFMOTO_COOKIE</code></td><td>是</td><td>格式：ticket=&lt;value&gt; 或裸 ticket；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="1"><code>scripts/kuaishou_reward_status.py</code></td><td><code>KUAISHOU_COOKIE</code></td><td>是</td><td>格式：每个账号一行完整 Cookie；每行至少包含 kuaishou.api_st=...；不使用 &amp; 或 @ 分隔；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="1"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_ACCOUNT</code></td><td>是</td><td>格式：每行一个账号：sk|完整Cookie；Cookie 必须包含 sess=&lt;value&gt;；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="1"><code>scripts/tieba_checkin.py</code></td><td><code>TIEBA_COOKIE</code></td><td>是</td><td>格式：建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="1"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_ACCOUNT</code></td><td>是</td><td>格式：每个账号一行，格式为 sk|完整Cookie；只在第一个竖线处分隔，因此 Cookie 后续内容会完整保留。；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="1"><code>scripts/tieba_checkin.py</code></td><td><code>TIEBA_COOKIE</code></td><td>是</td><td>格式：每个账号占一个非空行；单行填写 BDUSS 值，或填写形如 BDUSS=&lt;值&gt;; STOKEN=&lt;值&gt; 的完整 Cookie。同一账号的 Cookie 字段保留在同一行。；多账号格式以该脚本文档为准</td></tr>
 </tbody>
 </table>
 
@@ -52,10 +75,10 @@
 <table>
 <thead><tr><th>脚本</th><th>变量</th><th>敏感</th><th>填写格式</th></tr></thead>
 <tbody>
-<tr><td rowspan="6"><code>scripts/aliyunpan_checkin.py</code></td><td><code>ALIYUN_DRIVE_DRY_RUN</code></td><td>否</td><td>格式：Boolean: 1, true, yes, or on enables it.；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>ALIYUN_MAX_DELAY_SECONDS</code></td><td>否</td><td>格式：Non-negative integer seconds.；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>ALIYUN_PERSIST_ROTATED_TOKENS</code></td><td>否</td><td>格式：Boolean: 1, true, yes, or on enables it.；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>ALIYUN_TOKEN_OUTPUT_FILE</code></td><td>否</td><td>格式：Absolute filesystem path; the file is atomically replaced with mode 0600 and contains one token per line.；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="6"><code>scripts/aliyunpan_checkin.py</code></td><td><code>ALIYUN_DRIVE_DRY_RUN</code></td><td>否</td><td>格式：1、true、yes 或 on 表示启用。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>ALIYUN_MAX_DELAY_SECONDS</code></td><td>否</td><td>格式：非负整数秒数。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>ALIYUN_PERSIST_ROTATED_TOKENS</code></td><td>否</td><td>格式：1、true、yes 或 on 表示启用。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>ALIYUN_TOKEN_OUTPUT_FILE</code></td><td>否</td><td>格式：本地绝对文件路径；文件以 0600 权限原子替换，每行一个令牌。；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：本地目录路径；多账号格式以该脚本文档为准</td></tr>
 <tr><td rowspan="4"><code>scripts/baiduwangpan_checkin.py</code></td><td><code>BAIDUWANGPAN_DRY_RUN</code></td><td>否</td><td>格式：1/true/yes/on 启用；多账号格式以该脚本文档为准</td></tr>
@@ -73,24 +96,27 @@
 <tr><td rowspan="3"><code>scripts/kuaishou_reward_status.py</code></td><td><code>KUAISHOU_DRY_RUN</code></td><td>否</td><td>格式：1/true/yes/on 开启断网预演；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
 <tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：本地目录路径；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="3"><code>scripts/smzdm_checkin.js</code></td><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>SMZDM_USER_AGENT_APP</code></td><td>否</td><td>多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>SMZDM_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
-<tr><td rowspan="4"><code>scripts/tieba_checkin.py</code></td><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>默认 1；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>TIEBA_DELAY_MS</code></td><td>否</td><td>默认 1200；范围 500-10000；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>TIEBA_VERBOSE</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
-<tr><td><code>TIEBA_DRY_RUN</code></td><td>否</td><td>默认 0；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="4"><code>scripts/smzdm_checkin.js</code></td><td><code>SMZDM_USER_AGENT_APP</code></td><td>否</td><td>格式：完整的手机客户端 User-Agent 字符串。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>SMZDM_DRY_RUN</code></td><td>否</td><td>格式：1、true、yes 或 on 表示启用。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>格式：设置为 0、false、no 或 off 可关闭通知。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：包含 sendNotify.js 的绝对目录路径。；多账号格式以该脚本文档为准</td></tr>
+<tr><td rowspan="6"><code>scripts/tieba_checkin.py</code></td><td><code>TIE_BA_COOKIE</code></td><td>是</td><td>格式：每个账号占一个非空行；单行填写 BDUSS 值或包含 BDUSS 的完整 Cookie。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_DRY_RUN</code></td><td>否</td><td>格式：启用值为 1、true、yes 或 on，不区分大小写。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_VERBOSE</code></td><td>否</td><td>格式：启用值为 1、true、yes 或 on，不区分大小写。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>TIEBA_DELAY_MS</code></td><td>否</td><td>格式：整数毫秒，脚本会限制在 500 至 10000 之间，默认 1200。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY</code></td><td>否</td><td>格式：0、false、no 或 off 表示关闭，不区分大小写。；多账号格式以该脚本文档为准</td></tr>
+<tr><td><code>QINGLONG_NOTIFY_DIR</code></td><td>否</td><td>格式：本机目录路径，目录内应包含 notify.py。；多账号格式以该脚本文档为准</td></tr>
 </tbody>
 </table>
 
 多账号统一规则：每行一个账号；需要多个凭据变量时按相同非空行号配对，行数必须一致。
 
-- `scripts/aliyunpan_checkin.py`：ALIYUN_REFRESH_TOKEN uses one non-empty account per line; blank lines are ignored and every account is processed independently.。
+- `scripts/aliyunpan_checkin.py`：ALIYUN_REFRESH_TOKEN 每个非空行填写一个账号；忽略空行并独立处理各账号。。
 - `scripts/baiduwangpan_checkin.py`：BAIDU_COOKIE 中每个非空行是一个独立账号；依次处理，任一账号失败时进程整体非零退出。。
 - `scripts/cfmoto_checkin.py`：CFMOTO_COOKIE 每行一个账号。
 - `scripts/kuaishou_reward_status.py`：KUAISHOU_COOKIE 每个非空行对应一个账号；任一账号失败时任务整体非零退出。
-- `scripts/smzdm_checkin.js`：SMZDM_ACCOUNT 每个非空行对应一个账号，行内格式为 sk|完整Cookie；账号之间只使用换行。
-- `scripts/tieba_checkin.py`：TIEBA_COOKIE 每行一个账号，不使用 & 拼接；旧名称 TIE_BA_COOKIE 暂时兼容。
+- `scripts/smzdm_checkin.js`：SMZDM_ACCOUNT 每个非空行表示一个账号；各账号独立处理，任一账号失败时进程以非零状态退出。。
+- `scripts/tieba_checkin.py`：每个非空行表示一个账号；同一账号的全部 Cookie 字段必须写在同一行，脚本不会使用 &、@ 等字符拆分账号。账号逐个独立处理，任一账号失败都会使进程以非零状态退出。。
 
 ## 参数获取方法
 
@@ -99,8 +125,8 @@
 #### `ALIYUN_REFRESH_TOKEN`
 
 - 所属脚本：`scripts/aliyunpan_checkin.py`
-- 获取或设置：Sign in to the Aliyun Drive web application and copy the refresh_token value from its authenticated browser storage. Never share it.
-- 填写格式：`One non-empty refresh token per line; blank lines are ignored.`
+- 获取或设置：登录阿里云盘网页版，从本人已认证会话的浏览器存储中复制 refresh_token；切勿分享。
+- 填写格式：`每个非空行填写一个刷新令牌，空行会被忽略。`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
 #### `BAIDU_COOKIE`
@@ -127,15 +153,15 @@
 #### `SMZDM_ACCOUNT`
 
 - 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：使用本人测试账号在什么值得买 App 手动签到，从同一条 user-api.smzdm.com POST /checkin 请求中复制 Payload/Form Data 的 sk 和 Request Headers 的完整 Cookie，按 sk|完整Cookie 拼成一行。多账号每个账号一行；不要绕过证书固定。
-- 填写格式：`每行一个账号：sk|完整Cookie；Cookie 必须包含 sess=<value>`
+- 获取或设置：登录什么值得买手机客户端后，通过本人设备上的 HTTPS 调试工具查看签到请求，取得表单字段 sk，并从同一请求的 Cookie 中取得包含 sess 的完整 Cookie；按 sk|Cookie 组合为一行。请勿向他人发送这些值。
+- 填写格式：`每个账号一行，格式为 sk|完整Cookie；只在第一个竖线处分隔，因此 Cookie 后续内容会完整保留。`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
 #### `TIEBA_COOKIE`
 
 - 所属脚本：`scripts/tieba_checkin.py`
-- 获取或设置：本人浏览器登录 tieba.baidu.com，打开开发者工具 → Network，选择发往 tieba.baidu.com 的已登录请求并复制完整 Cookie 请求头。
-- 填写格式：`建议填写发往 tieba.baidu.com 的完整 Cookie；也兼容裸 BDUSS；多账号每行一个`
+- 获取或设置：在浏览器登录百度贴吧后，从 tieba.baidu.com 的请求 Cookie 中复制 BDUSS；可只填写 BDUSS 的值，也可填写包含 BDUSS 的完整 Cookie。请仅在自己的青龙环境中保存。
+- 填写格式：`每个账号占一个非空行；单行填写 BDUSS 值，或填写形如 BDUSS=<值>; STOKEN=<值> 的完整 Cookie。同一账号的 Cookie 字段保留在同一行。`
 - 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
 
@@ -144,26 +170,26 @@
 #### `ALIYUN_DRIVE_DRY_RUN`
 
 - 所属脚本：`scripts/aliyunpan_checkin.py`
-- 获取或设置：Set to 1 to simulate every account without network access, delay, check-in, or credential persistence.
-- 填写格式：`Boolean: 1, true, yes, or on enables it.`
+- 获取或设置：无需获取；设为 1 可在不联网、不等待、不签到且不保存凭据的情况下模拟所有账号。
+- 填写格式：`1、true、yes 或 on 表示启用。`
 
 #### `ALIYUN_MAX_DELAY_SECONDS`
 
 - 所属脚本：`scripts/aliyunpan_checkin.py`
-- 获取或设置：Optional maximum random delay before a live run; defaults to 0.
-- 填写格式：`Non-negative integer seconds.`
+- 获取或设置：无需获取；设置正式执行前的最大随机等待时间，默认 0。
+- 填写格式：`非负整数秒数。`
 
 #### `ALIYUN_PERSIST_ROTATED_TOKENS`
 
 - 所属脚本：`scripts/aliyunpan_checkin.py`
-- 获取或设置：Explicitly set to 1 only if rotated refresh tokens should be written through the file adapter; disabled by default.
-- 填写格式：`Boolean: 1, true, yes, or on enables it.`
+- 获取或设置：无需获取；仅在需要把轮换后的刷新令牌写入文件时明确设为 1，默认关闭。
+- 填写格式：`1、true、yes 或 on 表示启用。`
 
 #### `ALIYUN_TOKEN_OUTPUT_FILE`
 
 - 所属脚本：`scripts/aliyunpan_checkin.py`
-- 获取或设置：Choose an existing-directory absolute path for the opt-in token file. It is required only when persistence is enabled.
-- 填写格式：`Absolute filesystem path; the file is atomically replaced with mode 0600 and contains one token per line.`
+- 获取或设置：启用令牌持久化时，填写位于现有目录内的令牌文件绝对路径。
+- 填写格式：`本地绝对文件路径；文件以 0600 权限原子替换，每行一个令牌。`
 
 #### `QINGLONG_NOTIFY`
 
@@ -266,61 +292,67 @@
 - 获取或设置：仅当 notify.py 不在青龙标准路径时，填写其所在目录。
 - 填写格式：`本地目录路径`
 
-#### `QINGLONG_NOTIFY`
-
-- 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。
-- 默认值：`1`
-
 #### `SMZDM_USER_AGENT_APP`
 
 - 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：通常无需设置；只有默认值失效时才从同一请求的 User-Agent 请求头复制。
+- 获取或设置：可从本人设备的什么值得买客户端请求头中取得；通常无需配置。
+- 填写格式：`完整的手机客户端 User-Agent 字符串。`
 
 #### `SMZDM_DRY_RUN`
 
 - 所属脚本：`scripts/smzdm_checkin.js`
-- 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
-- 默认值：`0`
+- 获取或设置：设置为 1 可启用完全离线预演。
+- 填写格式：`1、true、yes 或 on 表示启用。`
 
 #### `QINGLONG_NOTIFY`
 
+- 所属脚本：`scripts/smzdm_checkin.js`
+- 获取或设置：青龙全局通知开关；默认启用。
+- 填写格式：`设置为 0、false、no 或 off 可关闭通知。`
+
+#### `QINGLONG_NOTIFY_DIR`
+
+- 所属脚本：`scripts/smzdm_checkin.js`
+- 获取或设置：仅当 sendNotify.js 不在青龙标准目录时，填写其所在目录。
+- 填写格式：`包含 sendNotify.js 的绝对目录路径。`
+
+#### `TIE_BA_COOKIE`
+
 - 所属脚本：`scripts/tieba_checkin.py`
-- 获取或设置：无需获取；默认通过青龙通知组件推送脱敏任务总结，设为 0 可关闭。
-- 默认值：`1`
-
-#### `TIEBA_DELAY_MS`
-
-- 所属脚本：`scripts/tieba_checkin.py`
-- 获取或设置：无需获取；按需填写请求间隔毫秒数，建议保留默认值。
-- 默认值：`1200`
-
-#### `TIEBA_VERBOSE`
-
-- 所属脚本：`scripts/tieba_checkin.py`
-- 获取或设置：无需获取；需要详细脱敏日志时手工设为 1。
-- 默认值：`0`
+- 获取或设置：旧版兼容变量，获取方法与 TIEBA_COOKIE 相同；仅当未设置 TIEBA_COOKIE 时读取。
+- 填写格式：`每个账号占一个非空行；单行填写 BDUSS 值或包含 BDUSS 的完整 Cookie。`
+- 安全性：敏感会话凭据，不得写入脚本、提交、截图或公开日志。
 
 #### `TIEBA_DRY_RUN`
 
 - 所属脚本：`scripts/tieba_checkin.py`
-- 获取或设置：无需获取；本地验证器会自动设置，青龙手工预演时可设为 1。
-- 默认值：`0`
+- 获取或设置：无需获取；设为 1 可进行完全断网的配置预演。
+- 填写格式：`启用值为 1、true、yes 或 on，不区分大小写。`
 
+#### `TIEBA_VERBOSE`
 
-## 定时任务
+- 所属脚本：`scripts/tieba_checkin.py`
+- 获取或设置：无需获取；按需设为 1，可在正式执行时显示贴吧名称和脱敏错误详情。
+- 填写格式：`启用值为 1、true、yes 或 on，不区分大小写。`
 
-| 任务名称 | 脚本 | 青龙命令 | 建议 Cron |
-| --- | --- | --- | --- |
-| 依赖安装 | `scripts/install_dependencies.sh` | `task scripts/install_dependencies.sh` | `23 4 * * 1` |
-| 阿里云盘签到 | `scripts/aliyunpan_checkin.py` | `python3 scripts/aliyunpan_checkin.py` | `3 11 * * *` |
-| 百度网盘签到 | `scripts/baiduwangpan_checkin.py` | `python3 scripts/baiduwangpan_checkin.py` | `0 9 * * *` |
-| 春风动力签到 | `scripts/cfmoto_checkin.py` | `task scripts/cfmoto_checkin.py` | `17 8 * * *` |
-| 快手奖励任务 | `scripts/kuaishou_reward_status.py` | `python3 scripts/kuaishou_reward_status.py` | `38 8,14,20 * * *` |
-| 什么值得买签到 | `scripts/smzdm_checkin.js` | `task scripts/smzdm_checkin.js` | `31 8 * * *` |
-| 百度贴吧签到 | `scripts/tieba_checkin.py` | `python3 scripts/tieba_checkin.py` | `23 8 * * *` |
+#### `TIEBA_DELAY_MS`
 
-依赖安装任务会读取本仓库的 `requirements.txt`、`package-lock.json` 或 `package.json`；没有额外依赖时安全退出，不会执行远程安装脚本。
+- 所属脚本：`scripts/tieba_checkin.py`
+- 获取或设置：无需获取；用于调整连续签到请求之间的固定间隔。
+- 填写格式：`整数毫秒，脚本会限制在 500 至 10000 之间，默认 1200。`
+
+#### `QINGLONG_NOTIFY`
+
+- 所属脚本：`scripts/tieba_checkin.py`
+- 获取或设置：无需获取；青龙通知默认开启，设为 0 可关闭。
+- 填写格式：`0、false、no 或 off 表示关闭，不区分大小写。`
+
+#### `QINGLONG_NOTIFY_DIR`
+
+- 所属脚本：`scripts/tieba_checkin.py`
+- 获取或设置：仅在青龙通知脚本不位于标准目录时填写 notify.py 所在目录。
+- 填写格式：`本机目录路径，目录内应包含 notify.py。`
+
 
 ## 验证与兼容性
 
@@ -328,28 +360,19 @@
 - `scripts/baiduwangpan_checkin.py`：SHA-256 `e9c658f4544427bd94ab4da74a724038d1f849c8b9665464ded6e8a1c4dd2c18`；live 业务成功证据位于 `projects/checkin/validation/d9230b69d9462c7c`。
 - `scripts/cfmoto_checkin.py`：SHA-256 `15ecc5e482af800b18360374359667392176fe88ab77c7950509da115f09f07a`；live 业务成功证据位于 `projects/checkin/validation/0ba7bb41fd4c339c`。
 - `scripts/kuaishou_reward_status.py`：SHA-256 `b727e90b3326ec58b00281be13ad27879cb75be0af9a9c5c0a93fe3fbd8aa305`；live 业务成功证据位于 `projects/checkin/validation/ks_cleanroom_v1`。
-- `scripts/smzdm_checkin.js`：SHA-256 `f46226280679776e3a2e7cdb7fa2c7b49207d74348472422c7bf78e47ac1193f`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
-- `scripts/tieba_checkin.py`：SHA-256 `6033addc33f3e0cbe9a15e470d074e051e9efd360231e765bed20d984994376a`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
+- `scripts/smzdm_checkin.js`：SHA-256 `f63ce76cdd5c9e61e5316ec4282a9d9bde130dac10bded05bb3b175ac2a1879f`；live 业务成功证据位于 `projects/checkin/validation/621df252c315f2d1`。
+- `scripts/tieba_checkin.py`：SHA-256 `c19c152b7240df266352493f048f0580710c5c2d1f7c2a62a52922025064d912`；live 业务成功证据位于 `projects/checkin/validation/e608052390d250da`。
 
 发布清单中的验证只对应所列哈希；脚本、依赖或接口逻辑变化后必须重新进行 live 业务验证。
 
 ## 副作用与风险
 
-- `scripts/aliyunpan_checkin.py`：Performs an Aliyun Drive membership check-in for each account during live runs；Refreshes each account access token and may rotate its refresh token during live runs；When explicitly enabled, atomically writes current refresh tokens to the configured local file。
+- `scripts/aliyunpan_checkin.py`：正式执行时为每个账号完成阿里云盘会员签到；正式执行时刷新账号访问令牌，并可能轮换刷新令牌；明确启用持久化时，将当前刷新令牌原子写入配置的本地文件。
 - `scripts/baiduwangpan_checkin.py`：为每个已配置的百度网盘账号执行每日会员签到；为每个已配置的百度网盘账号提交每日会员问题答案；在通知开启且青龙通知模块可用时发送一条脱敏任务汇总通知。
 - `scripts/cfmoto_checkin.py`：改变账号的当日签到和积分状态；最多发布三个公开帖子并留下可见内容；最多产生三次公开评论、三次点赞和三次分享任务记录；发帖和评论前访问第三方一言接口获取公开随机文本，不发送春风动力账号凭据。
 - `scripts/kuaishou_reward_status.py`：。
-- `scripts/smzdm_checkin.js`：改变什么值得买账号的当日签到与连续签到状态；满足条件时领取奖励并改变账号奖励状态。
-- `scripts/tieba_checkin.py`：向百度贴吧提交签到请求并改变账号在对应贴吧的当日签到状态。
-
-## 脚本功能
-
-- `scripts/aliyunpan_checkin.py`：Daily Aliyun Drive membership check-in with explicit response validation；Independent newline-delimited multi-account processing with aggregate exit status；Network-free deterministic dry-run simulation；Refresh-token rotation detection with optional secure file persistence。
-- `scripts/baiduwangpan_checkin.py`：每日百度网盘会员签到，明确验证积分或已完成状态；获取并提交每日会员成长问题答案；读取并报告脱敏用户名、会员等级、成长值和会员类型；逐行多账号独立处理与结构化 JSON 汇总；完全断网的配置预演；成功、部分失败、失败、配置错误和预演状态的青龙脱敏汇总通知。
-- `scripts/cfmoto_checkin.py`：执行每日签到；发帖和评论优先使用接口随机文本，返回出处时拼接作者与作品信息，接口异常时使用本地文案兜底；按配置发布帖子、评论、点赞并完成分享积分任务。
-- `scripts/kuaishou_reward_status.py`：只读查询快手收益与任务状态；按白名单输出非敏感状态字段；换行多账号独立执行并汇总。
-- `scripts/smzdm_checkin.js`：查询账号签到状态与连续签到奖励；执行每日签到；满足条件时领取额外奖励。
-- `scripts/tieba_checkin.py`：获取账号关注的贴吧列表；为尚未签到的贴吧执行每日签到；汇总每个账号的成功与失败数量。
+- `scripts/smzdm_checkin.js`：在什么值得买账号上执行每日签到并改变当日签到状态；满足条件时领取连续签到额外奖励并改变账号奖励状态。
+- `scripts/tieba_checkin.py`：正式执行时向百度贴吧提交签到请求，改变对应贴吧的当日签到状态；通知开启且青龙通知组件可用时发送脱敏任务汇总。
 
 使用测试账号先行验证。停止使用时应禁用任务、删除订阅和敏感环境变量；怀疑凭据泄漏时立即在对应平台撤销会话。
 
